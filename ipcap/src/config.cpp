@@ -61,11 +61,11 @@ namespace figkey {
         if ((type != config.end()) && !type->second.empty())
         {
             if (type->second == "DOIP")
-                info.type = CapturePacketType::DOIP;
+                info.type = ProtocolType::DOIP;
             else if (type->second == "UDS")
-                info.type = CapturePacketType::UDS;
+                info.type = ProtocolType::UDS;
             else
-                info.type = CapturePacketType::DEFAULT;
+                info.type = ProtocolType::DEFAULT;
             std::cout << "Protocol filtering configuration information : " << type->second << std::endl;
         }
 

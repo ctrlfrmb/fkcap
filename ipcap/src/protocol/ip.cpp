@@ -9,7 +9,7 @@
 
 namespace figkey {
 
-    IPPacketParse::IPPacketParse()
+    IPPacketParse::IPPacketParse():packetCallBack(nullptr)
 	{
 	}
 
@@ -17,11 +17,16 @@ namespace figkey {
     {
 	}
 
+    void IPPacketParse::setCallback(PacketCallback callback)
+    {
+        packetCallBack = callback;
+    }
+
 	bool IPPacketParse::writeCapturePacketError(CapturePacketError err, unsigned char* buf, struct timeval ts, unsigned int len) {
 		if (err == CapturePacketError::NoError)
 			return false;
 
-        std::string ipLog(getCapturePacketCouter(CapturePacketType::DEFAULT));
+        std::string ipLog(getCapturePacketCouter(ProtocolType::DEFAULT));
         ipLog += parsePacketTimestamp(ts);
         switch (err)
         {
@@ -58,24 +63,25 @@ namespace figkey {
         std::string err(PACKET_LOGGER_ERROR);
 		if (captureLen == 0)
 			err = "[SnapLengthError]: capture length is 0";
-        else if (captureLen > CAPTURE_SNAP_LENGTH)
+        else if (captureLen > CAPTURE_SNAP_LENGTH) {
 			err = "[SnapLengthError]: capture length more than 65535";
+            err += parseIPPacketToHexString(buf, 128);
+        }
 		//else if (captureLen < packetLen)
 		//	err == "[SnapLengthError]: capture length less than packet length";
 		else
 			return captureLen;
 
 		if (buf)
-			delete[] buf;
-        printf("snap length error: capture length: %u, valid lenght: %u, capture max length: %u\n", captureLen, packetLen, CAPTURE_SNAP_LENGTH);
+            delete[] buf;
 
-		std::unique_lock<std::mutex> locker(mutexParse);
-        {
-			std::string ipLog(getCapturePacketCouter(CapturePacketType::DEFAULT));
-			ipLog += parsePacketTimestamp(ts);
-			ipLog += err;
-            //logger->write(ipLog);
-		}
+        PacketInfo info;
+        info.index = ++packetCounter;
+        info.timestamp = parsePacketTimestamp(ts);
+        info.len = -1;
+        info.info = err;
+        if (packetCallBack)
+            packetCallBack(info);
 
 		return 0;
 	}
@@ -99,7 +105,7 @@ namespace figkey {
 		std::unique_lock<std::mutex> locker(mutexParse);
 		PacketLoggerInfo info;
         //if (logger)
-			info.index = getCapturePacketCouter(CapturePacketType::DEFAULT);
+			info.index = getCapturePacketCouter(ProtocolType::DEFAULT);
 		info.timestamp = parsePacketTimestamp(ts);
 		info.address = parsePacketAddress(buf);
 

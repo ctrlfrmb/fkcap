@@ -24,6 +24,11 @@ namespace figkey {
         std::cout << "pcap_version: " << pcap_version << std::endl;
         // Npcap 输出：“Npcap 版本 0.92，基于 libpcap 版本 1.8.1”
         // WinPcap 输出：“WinPcap 版本 4.1.3
+
+        // 获取线程池的实例
+        opensource::ctrlfrmb::ThreadPool& pool = opensource::ctrlfrmb::ThreadPool::Instance();
+        // 设置线程池参数
+        pool.set(8, 2, 600); // 设置最大线程数为8，最小线程数为2，线程超时时间为600秒
     }
 
     void NpcapCom::pcapHandler(u_char* user, const struct pcap_pkthdr* pkthdr, const u_char* packet) {
@@ -193,7 +198,7 @@ namespace figkey {
         return true;
     }
 
-    void NpcapCom::startCapture(CapturePacketType type, bool isSave) {
+    void NpcapCom::startCapture(ProtocolType type, bool isSave) {
         if (NULL == handle)
             return;
 
@@ -234,9 +239,9 @@ namespace figkey {
 #endif
     }
 
-    void NpcapCom::asyncStartCapture(CapturePacketType type, bool isSave)
+    void NpcapCom::asyncStartCapture(ProtocolType type, bool isSave)
     {
-        std::function<void(CapturePacketType, bool)> fun_async = std::bind(&NpcapCom::startCapture, this,
+        std::function<void(ProtocolType, bool)> fun_async = std::bind(&NpcapCom::startCapture, this,
             std::placeholders::_1, std::placeholders::_2);
         opensource::ctrlfrmb::ThreadPool::Instance().submit(fun_async, type, isSave);
     }
@@ -247,5 +252,7 @@ namespace figkey {
             pcap_close(handle);
             handle = NULL;
         }
+
+        opensource::ctrlfrmb::ThreadPool::Instance().shutdown();
     }
 }

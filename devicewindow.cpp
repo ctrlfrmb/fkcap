@@ -1,4 +1,4 @@
-#include "devicewindow.h"
+﻿#include "devicewindow.h"
 #include "ui_devicewindow.h"
 #include "ipcap.h"
 #include <QStandardItemModel>
@@ -6,11 +6,9 @@
 #include <QDebug>
 #include <QMessageBox>
 
-static figkey::NpcapCom pcap;
-
 DeviceWindow::DeviceWindow(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::DeviceWindow)
+    ui(new Ui::DeviceWindow), networkName("")
 {
     ui->setupUi(this);
     LoadDevices();
@@ -23,6 +21,7 @@ DeviceWindow::~DeviceWindow()
 
 void DeviceWindow::LoadDevices()
 {
+    auto& pcap = figkey::NpcapCom::Instance();
     auto networkList = pcap.getNetworkList();
     QStandardItemModel *model = new QStandardItemModel();
 
@@ -59,9 +58,23 @@ void DeviceWindow::LoadDevices()
     this->ui->treeView->setModel(model);
 }
 
+void DeviceWindow::ExitWindow()
+{
+    qDebug() << "network name: " << networkName;
+
+    // 选中项目，关闭窗口
+    this->accept();
+}
+
 void DeviceWindow::on_treeView_doubleClicked(const QModelIndex &index)
 {
-    on_pushButton_clicked();
+    networkName = index.data(Qt::DisplayRole).toString();
+    if (!index.parent().isValid())
+    {
+        networkName = index.child(0,0).data(Qt::DisplayRole).toString();
+    }
+
+    ExitWindow();
 }
 
 void DeviceWindow::on_pushButton_clicked()
@@ -74,19 +87,6 @@ void DeviceWindow::on_pushButton_clicked()
     }
     else if (this->ui->treeView->currentIndex().isValid()) {
         QModelIndex &index = this->ui->treeView->currentIndex();
-        QString name = index.data(Qt::DisplayRole).toString();
-        if (!index.parent().isValid())
-        {
-            index = index.child(0,0);
-            name = index.data(Qt::DisplayRole).toString();
-        }
-        qDebug() << "name: " << name;
-
-        if (!pcap.setCaptureNetwork(name.toStdString())) {
-            QMessageBox::critical(this, "Error", "Failed to set network.");
-        }
-        else
-            // 选中项目，关闭窗口
-            this->close();
+        on_treeView_doubleClicked(index);
     }
 }

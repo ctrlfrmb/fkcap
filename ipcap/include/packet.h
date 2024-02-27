@@ -18,11 +18,11 @@
 
 namespace figkey {
 
-    void setCapturePacketType(CapturePacketType type);
+    void setProtocolType(ProtocolType type);
 
-    std::string getCapturePacketCouter(CapturePacketType type);
+    std::string getCapturePacketCouter(ProtocolType type);
 
-    std::string getCaptureLoggerDirectory(CapturePacketType type);
+    std::string getCaptureLoggerDirectory(ProtocolType type);
 
     // 函数：返回 TCP 或 UDP 负载的起始位置
     size_t parsePacketProtocolLength(const unsigned char* packet, const uint32_t& size, CapturePacketError& err, uint8_t& protocol);
@@ -34,6 +34,8 @@ namespace figkey {
     std::string parseIPPacketToHexString(const unsigned char* data, size_t length);
 
     std::string parsePacketDataToHexString(const std::vector<uint8_t>& data);
+
+    PacketInfo parsePacketProtocolLength(const unsigned char* packet, const uint32_t& size);
 
     IpError checkIpHeader(const ip_header* ipHeader, const size_t& packetSize);
 

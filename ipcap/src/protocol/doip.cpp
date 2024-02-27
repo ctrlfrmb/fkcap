@@ -215,7 +215,7 @@ namespace figkey {
 
         std::string doipLog;
         if (info.index.empty())
-            info.index = getCapturePacketCouter(CapturePacketType::DOIP);
+            info.index = getCapturePacketCouter(ProtocolType::DOIP);
 
         // 获取线程池的实例
         opensource::ctrlfrmb::ThreadPool& pool = opensource::ctrlfrmb::ThreadPool::Instance();

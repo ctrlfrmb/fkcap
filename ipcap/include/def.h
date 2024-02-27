@@ -76,15 +76,17 @@ namespace figkey {
     };
 
     // Enumeration for capture packet type
-    enum class CapturePacketType : uint8_t {
-        DEFAULT = 0,         //默认TCP/UDP数据
-        DOIP,              //监控DOIP数据
-        UDS                //监控UDS数据
+    enum class ProtocolType : uint8_t {
+        DEFAULT = 0x0,         //默认TCP/UDP数据
+        TCP=0x02,
+        UDP=0x04,
+        DOIP=0x08,              //监控DOIP数据
+        UDS=0x10                //监控UDS数据
     };
 
     // Structure for load capture config information
     struct CaptureConfigInfo {
-        CapturePacketType type{ CapturePacketType::DEFAULT };
+        ProtocolType type{ ProtocolType::DEFAULT };
         bool save{ true };
         bool async{ false };
         std::string filter{ "" };
@@ -129,6 +131,18 @@ namespace figkey {
         uint16_t iph_chksum;          // 头部校验和
         uint32_t iph_sourceip;        // 源地址
         uint32_t iph_destip;          // 目的地址
+    };
+
+    struct ip6_header {
+        unsigned int
+               version : 4,
+               traffic_class : 8,
+               flow_label : 20;
+        uint16_t payload_len;
+        uint8_t next_header;
+        uint8_t hop_limit;
+        uint8_t src_addr[16];
+        uint8_t dst_addr[16];
     };
 
     // TCP 头定义
@@ -180,6 +194,21 @@ namespace figkey {
         DiagnosticMessage = 0x8001,
         DiagnosticPositiveAck = 0x8002,
         DiagnosticNegativeAck = 0x8003
+    };
+
+    struct PacketInfo
+    {
+        uint64_t index;                  // 索引
+        std::string timestamp;           // 时间戳
+        std::string srcIP;               // 源IP
+        std::string destIP;              // 目标IP
+        std::string srcMAC;              // 源MAC
+        std::string destMAC;             // 目标MAC
+        short srcPort;                   // 源端口
+        short destPort;                  // 目标端口
+        int   len;                       // 数据长度
+        uint8_t protocolType;            // 协议类型，使用枚举类表示
+        std::string info;                // 信息
     };
 
 }  // namespace figkey

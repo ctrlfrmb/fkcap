@@ -90,7 +90,7 @@ namespace figkey {
         //if (logger)
         {
             if (info.index.empty()) 
-                info.index = getCapturePacketCouter(CapturePacketType::UDS);
+                info.index = getCapturePacketCouter(ProtocolType::UDS);
 
             std::string udsLog(info.index);
             udsLog += ",";

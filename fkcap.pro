@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui sql
 CONFIG += c++11
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -24,7 +24,8 @@ SOURCES += main.cpp\
     ipcap/src/config.cpp \
     ipcap/src/ipcap.cpp \
     ipcap/src/packet.cpp \
-    devicewindow.cpp
+    devicewindow.cpp \
+    sqlite.cpp
 
 HEADERS  += mainwindow.h \
     include/common/thread_pool.hpp \
@@ -55,7 +56,8 @@ HEADERS  += mainwindow.h \
     ipcap/include/ipcap.h \
     ipcap/include/packet.h \
     ipcap/include/testip.h \
-    devicewindow.h
+    devicewindow.h \
+    sqlite.h
 
 FORMS    += mainwindow.ui \
     devicewindow.ui

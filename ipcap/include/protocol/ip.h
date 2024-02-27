@@ -15,8 +15,13 @@
 #include <mutex>
 #include <winsock2.h>
 #include "def.h"
+#include <functional>
+#include <atomic>
 
 namespace figkey {
+    // 回调函数类型
+    using PacketCallback = std::function<void(PacketInfo)>;
+
     // IP packet parse class 
     class IPPacketParse {
     public:
@@ -32,10 +37,15 @@ namespace figkey {
             return obj;
         }
 
+        // 设置回调函数
+        void setCallback(PacketCallback callback);
+
         bool parse(unsigned char* buf, struct timeval ts, unsigned int captureLen, unsigned int packetLen);
 
     private:
         std::mutex mutexParse;
+        std::atomic<uint64_t> packetCounter{ 0 };
+        PacketCallback packetCallBack;
 
         // IP packet parse constructor
         IPPacketParse();

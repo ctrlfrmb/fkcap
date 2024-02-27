@@ -1,5 +1,9 @@
 <RCC>
     <qresource prefix="/images">
         <file>resource/icons/select_device.png</file>
+        <file>resource/icons/main_window.ico</file>
+        <file>resource/icons/capture_pause.png</file>
+        <file>resource/icons/capture_start.png</file>
+        <file>resource/icons/capture_stop.png</file>
     </qresource>
 </RCC>

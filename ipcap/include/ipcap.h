@@ -19,9 +19,17 @@ namespace figkey {
 
 class NpcapCom {
 public:
-    explicit NpcapCom();
+    // Delete copy constructor and assignment operator to ensure uniqueness of the npcap common class
+    NpcapCom(const NpcapCom&) = delete;
+    NpcapCom(NpcapCom&&) = delete;
+    NpcapCom& operator=(const NpcapCom&) = delete;
+    NpcapCom& operator=(NpcapCom&&) = delete;
 
-    ~NpcapCom();
+    // Retrieve an instance of the packet capture class(singleton pattern)
+    static NpcapCom& Instance() {
+        static NpcapCom obj;
+        return obj;
+    }
 
     std::vector<NetworkInfo> getNetworkList();
 
@@ -29,14 +37,18 @@ public:
 
     bool setPacketFilter(const std::string& filterExpression, uint32_t netmask = PCAP_NETMASK_UNKNOWN);
 
-    void startCapture(CapturePacketType type, bool isSave);
+    void startCapture(ProtocolType type, bool isSave);
 
-    void asyncStartCapture(CapturePacketType type, bool isSave);
+    void asyncStartCapture(ProtocolType type, bool isSave);
 
     void stopCapture();
 
 private:
     pcap_t* handle;
+
+    NpcapCom();
+
+    ~NpcapCom();
 
     void init();
 
