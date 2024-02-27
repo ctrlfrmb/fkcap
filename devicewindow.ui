@@ -7,11 +7,15 @@
     <x>0</x>
     <y>0</y>
     <width>529</width>
-    <height>327</height>
+    <height>369</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Select Device</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="resource.qrc">
+    <normaloff>:/images/resource/icons/select_device.png</normaloff>:/images/resource/icons/select_device.png</iconset>
   </property>
   <property name="modal">
    <bool>true</bool>
@@ -20,7 +24,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>20</y>
+     <y>60</y>
      <width>501</width>
      <height>261</height>
     </rect>
@@ -30,7 +34,7 @@
    <property name="geometry">
     <rect>
      <x>430</x>
-     <y>290</y>
+     <y>330</y>
      <width>80</width>
      <height>20</height>
     </rect>
@@ -39,7 +43,23 @@
     <string>OK</string>
    </property>
   </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>12</y>
+     <width>501</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>1. Double-click the network card to start capturing
+2. Select the network card and click the Start Capture button</string>
+   </property>
+  </widget>
  </widget>
- <resources/>
+ <resources>
+  <include location="resource.qrc"/>
+ </resources>
  <connections/>
 </ui>

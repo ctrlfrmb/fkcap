@@ -35,18 +35,24 @@ void DeviceWindow::LoadDevices()
 
         QStandardItem *subItem = new QStandardItem;
         subItem->setText(QString::fromStdString(networkList[i].name));
-        subItem->setFlags(item->flags() & ~Qt::ItemIsEditable);
+        subItem->setFlags(subItem->flags() & ~Qt::ItemIsEditable);
         item->appendRow(subItem);
 
+        QString tip(QString::fromStdString(networkList[i].name));
         for (const auto& addr: networkList[i].address) {
             QString qstrIp = QString::fromStdString(addr.ip);
             QString qstrNetmask = QString::fromStdString(addr.netmask);
             QString str = QString("ip: %1 - %2").arg(qstrIp).arg(qstrNetmask);
             subItem = new QStandardItem;
             subItem->setText(str);
-            subItem->setFlags(item->flags() & ~Qt::ItemIsEditable);
+            subItem->setFlags(subItem->flags() & ~Qt::ItemIsEditable);
             item->appendRow(subItem);
+            if (tip.size() > 0)
+                tip +="\n";
+            tip +=qstrIp;
         }
+
+        item->setToolTip(tip);
     }
 
     model->setHorizontalHeaderLabels(QStringList()<<QStringLiteral("Network Card"));

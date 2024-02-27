@@ -66,3 +66,6 @@ else:unix: LIBS += -L$$PWD/include/npcap1.13/lib/x86_64/ -lwpcap
 
 INCLUDEPATH += $$PWD/include/npcap1.13/lib/x86_64
 DEPENDPATH += $$PWD/include/npcap1.13/lib/x86_64
+
+RESOURCES += \
+    resource.qrc
