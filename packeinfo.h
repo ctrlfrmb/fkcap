@@ -1,4 +1,4 @@
-// PacketInfoModel.h
+﻿// PacketInfoModel.h
 #ifndef PACKET_INFO_MODEL_H
 #define PACKET_INFO_MODEL_H
 
@@ -13,15 +13,20 @@ class PacketInfoModel : public QAbstractTableModel
 public:
     explicit PacketInfoModel(QObject *parent = nullptr);
 
+    void setDisplayRow(uint16_t rows);
+
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
     void addPacket(figkey::PacketInfo&& packet);
+    figkey::PacketInfo getFirstPacket();
 
 private:
     QVector<figkey::PacketInfo> m_data;
+    mutable QMutex m_mutex;  // 增加一个互斥体成员变量
+    uint16_t m_rows;
 };
 
 #endif // PACKET_INFO_MODEL_H

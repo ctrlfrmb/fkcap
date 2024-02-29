@@ -1,14 +1,17 @@
 ﻿#include "devicewindow.h"
 #include "ui_devicewindow.h"
 #include "ipcap.h"
+#include "config.h"
 #include <QStandardItemModel>
 #include <sstream>
 #include <QDebug>
 #include <QMessageBox>
 
+Q_DECLARE_METATYPE(figkey::NetworkInfo)
+
 DeviceWindow::DeviceWindow(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::DeviceWindow), networkName("")
+    ui(new Ui::DeviceWindow)
 {
     ui->setupUi(this);
     LoadDevices();
@@ -30,6 +33,7 @@ void DeviceWindow::LoadDevices()
         QStandardItem *item = new QStandardItem;
         item->setText(QString::fromStdString(networkList[i].description));
         item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+        item->setData(QVariant::fromValue(networkList[i]), Qt::UserRole+1);
         parentItem->appendRow(item);
 
         QStandardItem *subItem = new QStandardItem;
@@ -60,19 +64,21 @@ void DeviceWindow::LoadDevices()
 
 void DeviceWindow::ExitWindow()
 {
-    qDebug() << "network name: " << networkName;
-
     // 选中项目，关闭窗口
     this->accept();
 }
 
 void DeviceWindow::on_treeView_doubleClicked(const QModelIndex &index)
 {
-    networkName = index.data(Qt::DisplayRole).toString();
+    using namespace figkey;
+    NetworkInfo network;
     if (!index.parent().isValid())
-    {
-        networkName = index.child(0,0).data(Qt::DisplayRole).toString();
-    }
+        // 取出自定义的 NetworkInfo 结构体数据
+        network = index.data(Qt::UserRole+1).value<NetworkInfo>();
+    else
+        network = index.parent().data(Qt::UserRole+1).value<NetworkInfo>();
+
+    CaptureConfig::Instance().setNetwork(network);
 
     ExitWindow();
 }

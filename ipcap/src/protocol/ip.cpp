@@ -28,14 +28,16 @@ namespace figkey {
 			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
 		
         PacketInfo info = parseIpPacket(buf, captureLen);
-        if (info.protocolType >= PROTOCOL_TYPE_TCP)
-            info.index = ++packetCounter;
         info.timestamp = parsePacketTimestamp(ts);
         if (buf)
             delete[] buf;
 
-        if (packetCallBack)
+        std::unique_lock<std::mutex> locker(mutexParse);
+        if (packetCallBack) {
+            if (info.protocolType >= PROTOCOL_TYPE_TCP)
+                info.index = ++packetCounter;
             packetCallBack(info);
+        }
 //		if (!CaptureConfig::Instance().checkFilterAddress(info.address)) {
 //			//// 获取 IP 头部的起始位置
 //			const ip_header* ip = reinterpret_cast<const ip_header*>(buf + sizeof(ethernet_header));

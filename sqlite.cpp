@@ -46,7 +46,7 @@ void SqliteCom::storePacket(const figkey::PacketInfo &packet)
     QSqlQuery query(db);
     query.prepare("INSERT INTO Packets (index, timestamp, srcIP, destIP, "
                   "srcMAC, destMAC, srcPort, destPort, protocolType, "
-                  "info) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                  "data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     query.addBindValue(QVariant::fromValue(packet.index));
     query.addBindValue(QString::fromStdString(packet.timestamp));
     query.addBindValue(QString::fromStdString(packet.srcIP));
@@ -56,7 +56,7 @@ void SqliteCom::storePacket(const figkey::PacketInfo &packet)
     query.addBindValue(QVariant::fromValue(packet.srcPort));
     query.addBindValue(QVariant::fromValue(packet.destPort));
     query.addBindValue(QVariant::fromValue(packet.protocolType));
-    query.addBindValue(QString::fromStdString(packet.info));
+    query.addBindValue(QString::fromStdString(packet.data));
 
     if (!query.exec()) {
         qDebug() << "Error inserting into the table: " << query.lastError();
@@ -70,7 +70,7 @@ bool SqliteCom::createTableIfNotExists()
     if (!query.exec("CREATE TABLE IF NOT EXISTS Packets "
                     "(index INTEGER PRIMARY KEY, timestamp TEXT, srcIP TEXT, "
                     "destIP TEXT, srcMAC TEXT, destMAC TEXT, srcPort INTEGER, "
-                    "destPort INTEGER, protocolType INTEGER, info TEXT)")) {
+                    "destPort INTEGER, protocolType INTEGER, data TEXT)")) {
         qDebug() << "Error creating table: " << query.lastError();
         return false;
     }

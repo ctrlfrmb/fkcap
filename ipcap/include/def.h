@@ -19,6 +19,8 @@
 #define CAPTURE_SNAP_LENGTH 65536
 #define CAPTURE_PROMISC 1
 #define CONFIG_ROOT_NODE_NAME "ipcap"
+#define CONFIG_DISPLAY_ROWS "DisplayRows"
+#define CONFIG_TIME_UPDATE_UI "TimeUpdateUI"
 #define CONFIG_SAVE_LOG_NODE "CaptureType"
 #define CONFIG_CAPTURE_TYPE_NODE "SaveLog"
 #define CONFIG_RUN_ASYNC_NODE "RunAsync"
@@ -84,14 +86,6 @@ namespace figkey {
         UDS=0x10                //监控UDS数据
     };
 
-    // Structure for load capture config information
-    struct CaptureConfigInfo {
-        ProtocolType type{ ProtocolType::DEFAULT };
-        bool save{ true };
-        bool async{ false };
-        std::string filter{ "" };
-    };
-
     // Structure for storing ip address information
     struct IpAddressInfo {
         std::string ip;
@@ -103,6 +97,17 @@ namespace figkey {
         std::string name;
         std::string description;
         std::vector<IpAddressInfo> address;
+    };
+
+    // Structure for load capture config information
+    struct CaptureConfigInfo {
+        uint16_t displayRows{100};
+        uint16_t timeUpdateUI{1000};        //ms
+        NetworkInfo network;
+        ProtocolType type{ ProtocolType::DEFAULT };
+        bool save{ true };
+        bool async{ false };
+        std::string filter{ "udp or tcp" };
     };
 
     // Structure for storing packet logger information
@@ -253,8 +258,8 @@ namespace figkey {
         std::string destMAC;             // 目标MAC
         uint16_t srcPort;                // 源端口
         uint16_t destPort;               // 目标端口
-        uint16_t payloadLength;          // 负载长度
         uint8_t protocolType;            // 协议类型，使用枚举类表示
+        uint16_t payloadLength;          // 负载长度
         std::string data;                // 信息
     };
 

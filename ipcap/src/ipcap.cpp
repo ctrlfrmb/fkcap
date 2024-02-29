@@ -3,6 +3,7 @@
 #include "ipcap.h"
 #include "common/thread_pool.hpp"
 #include "protocol/ip.h"
+#include "config.h"
 #include <ws2tcpip.h>
 #include <iostream>
 #pragma comment(lib, "ws2_32.lib")
@@ -15,6 +16,8 @@ namespace figkey {
 
     NpcapCom::~NpcapCom() {
         stopCapture();
+
+        opensource::ctrlfrmb::ThreadPool::Instance().shutdown();
     }
 
     void NpcapCom::init()
@@ -40,6 +43,9 @@ namespace figkey {
             std::cerr << "Fatal error: NpcapCom is null" << std::endl;
             return;
         }
+
+        if (!processor->isRunning)
+            return;
 
         u_char* buf = nullptr;
         if (pkthdr->caplen <= CAPTURE_SNAP_LENGTH)  // 确保caplen小于等于捕获长度
@@ -125,10 +131,15 @@ namespace figkey {
         return devices;
     }
 
-    bool NpcapCom::setCaptureNetwork(const std::string& networkName) {
+    void NpcapCom::setIsRunning(bool flag) {
+        isRunning = flag;
+    }
+
+    bool NpcapCom::pcapOpen() {
         if (handle != NULL)
             return true;
 
+        const std::string& networkName = figkey::CaptureConfig::Instance().getConfigInfo().network.name;
         char errbuf[PCAP_ERRBUF_SIZE];
 #if 0
         handle = pcap_open_live(networkName.c_str(), 65536, PCAP_OPENFLAG_PROMISCUOUS, 1000, errbuf);
@@ -182,11 +193,11 @@ namespace figkey {
         return true;
     }
 
-    bool NpcapCom::setPacketFilter(const std::string& filterExpression, uint32_t netmask)
+    bool NpcapCom::pcapFilter(uint32_t netmask)
     {
         // 设置过滤器（例如只捕获TCP数据包）
         struct bpf_program filter;
-        if (pcap_compile(handle, &filter, filterExpression.c_str(), CAPTURE_PROMISC, netmask) < 0) {
+        if (pcap_compile(handle, &filter, figkey::CaptureConfig::Instance().getConfigInfo().filter.c_str(), CAPTURE_PROMISC, netmask) < 0) {
             std::cerr << "Bad filter - " << pcap_geterr(handle) << std::endl;
             return false;
         }
@@ -198,10 +209,14 @@ namespace figkey {
         return true;
     }
 
-    void NpcapCom::startCapture(ProtocolType type, bool isSave) {
-        if (NULL == handle)
+    void NpcapCom::startCapture() {
+        if (!pcapOpen())
             return;
 
+        if (!pcapFilter())
+            return;
+
+        isRunning = true;
 #if 0
         static std::function<bool(const struct pcap_pkthdr*, const u_char*)> ipParse = std::bind(&IPPacketParse::parse, &IPPacketParse::Instance(),
             std::placeholders::_1, std::placeholders::_2);
@@ -239,11 +254,10 @@ namespace figkey {
 #endif
     }
 
-    void NpcapCom::asyncStartCapture(ProtocolType type, bool isSave)
+    void NpcapCom::asyncStartCapture()
     {
-        std::function<void(ProtocolType, bool)> fun_async = std::bind(&NpcapCom::startCapture, this,
-            std::placeholders::_1, std::placeholders::_2);
-        opensource::ctrlfrmb::ThreadPool::Instance().submit(fun_async, type, isSave);
+        std::function<void()> fun_async = std::bind(&NpcapCom::startCapture, this);
+        opensource::ctrlfrmb::ThreadPool::Instance().submit(fun_async);
     }
 
     void NpcapCom::stopCapture()
@@ -252,7 +266,5 @@ namespace figkey {
             pcap_close(handle);
             handle = NULL;
         }
-
-        opensource::ctrlfrmb::ThreadPool::Instance().shutdown();
     }
 }

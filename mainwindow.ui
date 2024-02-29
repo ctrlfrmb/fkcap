@@ -18,16 +18,29 @@
     <normaloff>:/images/resource/icons/main_window.ico</normaloff>:/images/resource/icons/main_window.ico</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QTableView" name="tableView">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>-9</y>
-      <width>801</width>
-      <height>401</height>
-     </rect>
+   <layout class="QVBoxLayout" name="verticalLayout" stretch="3,1">
+    <property name="spacing">
+     <number>1</number>
     </property>
-   </widget>
+    <property name="leftMargin">
+     <number>1</number>
+    </property>
+    <property name="topMargin">
+     <number>1</number>
+    </property>
+    <property name="rightMargin">
+     <number>1</number>
+    </property>
+    <property name="bottomMargin">
+     <number>1</number>
+    </property>
+    <item>
+     <widget class="QTableView" name="tableView"/>
+    </item>
+    <item>
+     <widget class="QTreeView" name="treeView"/>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -64,7 +77,7 @@
      <string>Capture</string>
     </property>
     <addaction name="actionStart"/>
-    <addaction name="actionPasue"/>
+    <addaction name="actionPause"/>
     <addaction name="actionStop"/>
    </widget>
    <widget class="QMenu" name="menuTool">
@@ -96,9 +109,10 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actionStart"/>
-   <addaction name="actionPasue"/>
+   <addaction name="actionPause"/>
    <addaction name="actionStop"/>
   </widget>
+  <widget class="QStatusBar" name="statusBar"/>
   <action name="actionAbout">
    <property name="text">
     <string>About</string>
@@ -113,13 +127,13 @@
     <string>Start</string>
    </property>
   </action>
-  <action name="actionPasue">
+  <action name="actionPause">
    <property name="icon">
     <iconset resource="resource.qrc">
      <normaloff>:/images/resource/icons/capture_pause.png</normaloff>:/images/resource/icons/capture_pause.png</iconset>
    </property>
    <property name="text">
-    <string>Pasue</string>
+    <string>Pause</string>
    </property>
   </action>
   <action name="actionStop">

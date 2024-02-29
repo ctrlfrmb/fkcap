@@ -14,6 +14,7 @@
 
 #include "pcap.h"
 #include "def.h"
+#include <atomic>
 
 namespace figkey {
 
@@ -33,24 +34,27 @@ public:
 
     std::vector<NetworkInfo> getNetworkList();
 
-    bool setCaptureNetwork(const std::string& networkName);
+    void setIsRunning(bool flag);
 
-    bool setPacketFilter(const std::string& filterExpression, uint32_t netmask = PCAP_NETMASK_UNKNOWN);
+    void startCapture();
 
-    void startCapture(ProtocolType type, bool isSave);
-
-    void asyncStartCapture(ProtocolType type, bool isSave);
+    void asyncStartCapture();
 
     void stopCapture();
 
 private:
     pcap_t* handle;
+    std::atomic<bool> isRunning;
 
     NpcapCom();
 
     ~NpcapCom();
 
     void init();
+
+    bool pcapOpen();
+
+    bool pcapFilter(uint32_t netmask = PCAP_NETMASK_UNKNOWN);
 
     static void pcapHandler(u_char* user, const struct pcap_pkthdr* pkthdr, const u_char* packet);
 };

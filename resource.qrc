@@ -5,5 +5,6 @@
         <file>resource/icons/capture_pause.png</file>
         <file>resource/icons/capture_start.png</file>
         <file>resource/icons/capture_stop.png</file>
+        <file>resource/icons/capture_resume.png</file>
     </qresource>
 </RCC>

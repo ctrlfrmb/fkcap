@@ -50,44 +50,60 @@ namespace figkey {
         return true;
     }
 
-    // 获取协议过滤
-    CaptureConfigInfo CaptureConfig::getFilterProtocol(const std::string& path) {
-        CaptureConfigInfo info;
+    bool CaptureConfig::loadConfigFile(const std::string& path){
         std::map<std::string, std::string> config;
         if (!LoadConfigFile(path, config))
-            return info;
+            return false;
+
+        auto rows = config.find(CONFIG_DISPLAY_ROWS);
+        if ((rows != config.end()) && !rows->second.empty())
+        {
+            configInfo.displayRows = std::stoi(rows->second);
+            if (configInfo.displayRows < 20 || configInfo.displayRows > 10000)
+                configInfo.displayRows = 100;
+            std::cout << "Protocol display rows : " << configInfo.displayRows << std::endl;
+        }
+
+        auto updateUI = config.find(CONFIG_TIME_UPDATE_UI);
+        if ((updateUI != config.end()) && !updateUI->second.empty())
+        {
+            configInfo.timeUpdateUI = std::stoi(updateUI->second);
+            if (configInfo.timeUpdateUI < 200 || configInfo.timeUpdateUI > 60000)
+                configInfo.timeUpdateUI = 1000;
+            std::cout << "Protocol time update UI : " << configInfo.timeUpdateUI << std::endl;
+        }
 
         auto type = config.find(CONFIG_CAPTURE_TYPE_NODE);
         if ((type != config.end()) && !type->second.empty())
         {
             if (type->second == "DOIP")
-                info.type = ProtocolType::DOIP;
+                configInfo.type = ProtocolType::DOIP;
             else if (type->second == "UDS")
-                info.type = ProtocolType::UDS;
+                configInfo.type = ProtocolType::UDS;
             else
-                info.type = ProtocolType::DEFAULT;
+                configInfo.type = ProtocolType::DEFAULT;
             std::cout << "Protocol filtering configuration information : " << type->second << std::endl;
         }
 
         auto save = config.find(CONFIG_CAPTURE_TYPE_NODE);
         if ((save != config.end()) && !save->second.empty())
         {
-            info.save = (save->second == "false")? false :true;
-            std::cout << "Specifies whether to save packet configuration information : " << (info.save?"true":"false") << std::endl;
+            configInfo.save = (save->second == "false")? false :true;
+            std::cout << "Specifies whether to save packet configuration information : " << (configInfo.save?"true":"false") << std::endl;
         }
 
         auto async = config.find(CONFIG_RUN_ASYNC_NODE);
         if ((async != config.end()) && !async->second.empty())
         {
-            info.async = (async->second == "true") ? true : false;
-            std::cout << "Whether to run configuration information asynchronously : " << (info.async ? "true" : "false") << std::endl;
+            configInfo.async = (async->second == "true") ? true : false;
+            std::cout << "Whether to run configuration information asynchronously : " << (configInfo.async ? "true" : "false") << std::endl;
         }
-        
+
         auto filter = config.find(CONFIG_FILTER_PROTOCOL_NODE);
         if ((filter != config.end()) && !filter->second.empty())
         {
-            info.filter = filter->second;
-            std::cout << "Protocol filtering configuration information : " << info.filter << std::endl;
+            configInfo.filter = filter->second;
+            std::cout << "Protocol filtering configuration information : " << configInfo.filter << std::endl;
         }
 
         auto mac = config.find(CONFIG_FILTER_MAC_NODE);
@@ -115,7 +131,16 @@ namespace figkey {
             enableFilter = true;
         else
             enableFilter = false;
-        return info;
+
+        return true;
+    }
+
+    const CaptureConfigInfo& CaptureConfig::getConfigInfo() const {
+        return configInfo;
+    }
+
+    void  CaptureConfig::setNetwork(const NetworkInfo& network) {
+        configInfo.network = network;
     }
 
     // 检查地址过滤

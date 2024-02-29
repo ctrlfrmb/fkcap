@@ -24,6 +24,7 @@ namespace figkey {
         std::string filterMac{ "" };
         std::string filterIp{ "" };
         std::string filterPort{ "" };
+        CaptureConfigInfo configInfo;
 
         // Capture config constructor
         CaptureConfig()=default;
@@ -44,8 +45,12 @@ namespace figkey {
             return obj;
         }
 
-        // 获取协议过滤
-        CaptureConfigInfo getFilterProtocol(const std::string& path);
+        bool loadConfigFile(const std::string& path);
+
+        const CaptureConfigInfo& getConfigInfo() const ;
+
+        void setNetwork(const NetworkInfo& network);
+
         // 检查地址过滤
         bool checkFilterAddress(const std::string& address);
     };

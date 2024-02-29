@@ -15,8 +15,6 @@ public:
     explicit DeviceWindow(QWidget *parent = 0);
     ~DeviceWindow();
 
-    const QString& getNetworkName() const { return networkName; }
-
 private slots:
     void on_treeView_doubleClicked(const QModelIndex &index);
 
@@ -28,7 +26,6 @@ private:
 
 private:
     Ui::DeviceWindow *ui;
-    QString networkName;
 };
 
 #endif // DEVICEWINDOW_H
