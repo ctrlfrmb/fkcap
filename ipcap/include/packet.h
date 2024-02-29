@@ -35,7 +35,7 @@ namespace figkey {
 
     std::string parsePacketDataToHexString(const std::vector<uint8_t>& data);
 
-    PacketInfo parsePacketProtocolLength(const unsigned char* packet, const uint32_t& size);
+    PacketInfo parseIpPacket(const unsigned char* packet, const uint32_t& size);
 
     IpError checkIpHeader(const ip_header* ipHeader, const size_t& packetSize);
 

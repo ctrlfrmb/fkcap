@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include "sqlite.h"
+#include "packeinfo.h"
 
 namespace Ui {
 class MainWindow;
@@ -24,6 +25,7 @@ private:
 private:
     Ui::MainWindow *ui;
     SqliteCom db;
+    PacketInfoModel *pim;
 };
 
 #endif // MAINWINDOW_H

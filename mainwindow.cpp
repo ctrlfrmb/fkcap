@@ -1,4 +1,4 @@
-#include "mainwindow.h"
+﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "ipcap.h"
 #include "config.h"
@@ -42,6 +42,10 @@ void MainWindow::LoadConfigFile()
     auto& ip = IPPacketParse::Instance();
     ip.setCallback(std::bind(&MainWindow::processPacket, this, std::placeholders::_1));
 
+    pim = new PacketInfoModel(this);
+    ui->tableView->setModel(pim);
+    // 你可以在合适的时候调用 model->addPacket(...) 来添加新的报文信息
+
     qDebug() << "figkey ip capture tool default config file: "<<path;
     cfg = CaptureConfig::Instance().getFilterProtocol(path.toStdString());
 
@@ -55,5 +59,9 @@ void MainWindow::LoadConfigFile()
 
 void MainWindow::processPacket(figkey::PacketInfo packetInfo)
 {
-
+    if (packetInfo.index == 0)
+        qDebug() << packetInfo.srcIP.c_str()<<"->"<<packetInfo.destIP.c_str()<<" payload length:"
+             <<packetInfo.payloadLength<<", "<<packetInfo.data.c_str();
+    else
+        pim->addPacket(std::move(packetInfo));
 }

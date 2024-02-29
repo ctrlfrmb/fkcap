@@ -25,7 +25,8 @@ SOURCES += main.cpp\
     ipcap/src/ipcap.cpp \
     ipcap/src/packet.cpp \
     devicewindow.cpp \
-    sqlite.cpp
+    sqlite.cpp \
+    packeinfo.cpp
 
 HEADERS  += mainwindow.h \
     include/common/thread_pool.hpp \
@@ -57,7 +58,8 @@ HEADERS  += mainwindow.h \
     ipcap/include/packet.h \
     ipcap/include/testip.h \
     devicewindow.h \
-    sqlite.h
+    sqlite.h \
+    packeinfo.h
 
 FORMS    += mainwindow.ui \
     devicewindow.ui

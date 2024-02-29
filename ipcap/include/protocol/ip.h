@@ -52,10 +52,6 @@ namespace figkey {
 
         // IP packet parse destructor
         ~IPPacketParse();
-
-        bool writeCapturePacketError(CapturePacketError err, unsigned char* buf, struct timeval ts, unsigned int packetLen);
-
-        uint32_t checkInput(unsigned char* buf, struct timeval ts, unsigned int captureLen, unsigned int len);
     };
 
 }  // namespace figkey

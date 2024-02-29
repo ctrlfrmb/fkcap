@@ -14,6 +14,12 @@
 #include <ws2tcpip.h>
 #pragma comment(lib, "ws2_32.lib")
 
+#define ETHERNET_IPV4_HEADER_MIN (14+20)
+#define ETHERNET_IPV6_HEADER_MIN (14+40)
+#define ETHERNET_IP_TCP_HEADER_MIN (14+20+20)
+#define ETHERNET_IP_UDP_HEADER_MIN (14+20+8)
+#define ETHERNET_MTU_MAX 1500
+
 namespace figkey {
     static std::atomic<uint64_t> packetLogCounter{ 0 };
     static ProtocolType packetCaptureType{ ProtocolType::DEFAULT };
@@ -252,127 +258,215 @@ namespace figkey {
         return ss.str();
     }
 
-    PacketInfo parsePacketProtocolLength(const unsigned char* packet, const uint32_t& size) {
-        PacketInfo info;
-        std::stringstream ss;
-        info.len = size;
-        info.protocolType = static_cast<uint8_t>(ProtocolType::DEFAULT);
+    static std::string convertMacToString(const uint8_t mac[6]){
+        char buf[17];
+        sprintf(buf, "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+        return std::string(buf);
+    }
 
-        if (size < ipPacketMinLength) {
-            if (size > 0) {
-                ss << "[SnapLengthError]: capture length " << size << " less than ip header min length "
-                   << ipPacketMinLength << ", ";
-                info.info = ss.str()+parseIPPacketToHexString(buf, size);
-            }
-            else
-                info.info  = "[SnapLengthError]: capture length is 0";
-            return info;
-        }
-
+    static bool parseEthernet(const unsigned char* packet, const uint32_t& size, PacketInfo &info) {
         // 以太网帧头解析
         auto* eth = reinterpret_cast<const ethernet_header*>(packet);
         if (!eth) {
-            info.info  = "[SystemError]: parse ethernet header failed, ";
-            info.info += parseIPPacketToHexString(buf, size);
-            return info;
+            info.data = "[SystemError]: parse ethernet header failed";
+            info.err = PACKET_SYSTEM_ERROR;
+            return false;
         }
 
-        ss.clear();
-        for (int i = 0; i < 6; i++) {
-            ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(eth->src_mac[i]);
-            if (i < 5) ss << ":";
+        // 假设以太网头部使用 Ethernet II 格式，则下一个协议类型字段为 2 字节
+        uint16_t type = ntohs(eth->type);
+        if (type == 0x0800) {
+            if (size <= ETHERNET_IPV4_HEADER_MIN) {
+                char buf[256];
+                sprintf(buf, "[Ipv4HeadError]: IPv4 packet loss, the current packet length %u is less than the required minimum packet length %d", size, ETHERNET_IPV4_HEADER_MIN);
+                info.data = buf;
+                info.err = PACKET_IPV4_HEADER_LOST_ERROR;
+                return false;
+            }
+            // IPv4
+            info.protocolType = 4;
+        } else if (type == 0x86DD) {
+            if (size <= ETHERNET_IPV6_HEADER_MIN) {
+                char buf[256];
+                sprintf(buf, "[Ipv6HeadError]: IPv6 packet loss, the current packet length %u is less than the required minimum packet length %d", size, ETHERNET_IPV6_HEADER_MIN);
+                info.data = buf;
+                info.err = PACKET_IPV6_HEADER_LOST_ERROR;
+                return false;
+            }
+            // IPv6
+            info.protocolType = 6;
+        } else {
+            // 不是 IP 数据包或者我们暂时不处理的类型
+            info.data = "[EthernetError]: Ethernet type unknown";
+            info.err = PACKET_ETHERNET_TYPE_UNKNOWN;
+            return false;
         }
-        info.srcMAC = ss.str();
 
-        ss.clear();
-        for (int i = 0; i < 6; i++) {
-            ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(eth->dest_mac[i]);
-            if (i < 5) ss << ":";
-        }
-        info.destMAC = ss.str();
+        info.srcMAC = convertMacToString(eth->src_mac);
+        info.destMAC = convertMacToString(eth->dest_mac);
+        return true;
+    }
 
+    static std::string convertIpToString(uint32_t ip) {
+        struct in_addr ip_addr;
+        ip_addr.s_addr = ip;
+        return inet_ntoa(ip_addr);
+    }
+
+    static size_t parseIPv4(const unsigned char* packet, PacketInfo &info) {
         // IP 头解析
-        const ip_header* ip = reinterpret_cast<const ip_header*>(packet + sizeof(ethernet_header));
-        if (!ip) {
-            info.info  = "[SystemError]: parse ip header failed, ";
-            info.info += parseIPPacketToHexString(buf, size);
+        const ip_header* iph = reinterpret_cast<const ip_header*>(packet);
+        if (!iph) {
+            info.data  = "[SystemError]: parse ipv4 header failed";
+            info.err = PACKET_SYSTEM_ERROR;
+            return 0;
+        }
+
+        info.srcIP = convertIpToString(iph->iph_sourceip);
+        info.destIP = convertIpToString(iph->iph_destip);
+        info.protocolType = iph->iph_protocol;
+        info.payloadLength = ntohs(iph->iph_len) - ((iph->ihl_and_version & 0xF) * 4);  // 注意网络到主机字节序的转换
+        // 计算 IP 头部的长度
+        //uint8_t version = (ip->ihl_and_version >> 4) & 0xF;
+        size_t len = sizeof(ethernet_header)+(iph->ihl_and_version & 0xF) * 4;
+        return len;
+    }
+
+    static size_t parseIPv6(const unsigned char* packet, PacketInfo &info) {
+        const ip6_header* iph = reinterpret_cast<const ip6_header*>(packet);
+        if (!iph) {
+            info.data  = "[SystemError]: parse ipv6 header failed";
+            info.err = PACKET_SYSTEM_ERROR;
+            return 0;
+        }
+
+        char straddr[INET6_ADDRSTRLEN];
+        inet_ntop(AF_INET6, (void *)iph->src_addr, straddr, INET6_ADDRSTRLEN);
+        info.srcIP = std::string(straddr);
+
+        inet_ntop(AF_INET6, (void *)iph->dst_addr, straddr, INET6_ADDRSTRLEN);
+        info.destIP = std::string(straddr);
+
+        info.protocolType = iph->next_header;
+        info.payloadLength = iph->payload_len;
+        size_t len = sizeof(ethernet_header)+sizeof(ip6_header); //固定40，扩展需令计算
+        return len;
+    }
+
+    static std::string parsePayloadToHexString(const unsigned char* data, size_t length) {
+        std::stringstream ss;
+        ss << std::hex << std::setfill('0');
+
+        for (size_t i = 0; i < length; ++i) {
+            ss << std::setw(2) << static_cast<unsigned>(data[i]) << " ";
+        }
+
+        return ss.str();
+    }
+
+    static size_t parseTCP(const unsigned char* packet, const uint32_t& size, PacketInfo &info) {
+        info.protocolType = PROTOCOL_TYPE_TCP;
+        // TCP 头的长度 (可能包括选项)
+        auto len = sizeof(tcp_header);
+        if (size < len) {
+            info.data = "[TcpHeaderError]: the packet length is less than the tcp header minimum value " ;
+            info.err = PACKET_TCP_HEADER_LOST_ERROR;
+            return 0;
+        }
+
+        const tcp_header* tcph = reinterpret_cast<const tcp_header*>(packet);
+        if (!tcph) {
+            info.data  = "[SystemError]: parse tcp header failed";
+            info.err = PACKET_SYSTEM_ERROR;
+            return 0;
+        }
+
+        auto headerLen = ((tcph->data_offset_and_reserved >> 4) & 0xF) * 4; // 提取 th_off 的值
+        if (headerLen  == 0) {
+            info.data = "[TcpHeaderError]: data_offset_and_reserved is 0";
+            info.err = PACKET_TCP_HEADER_OFFSET_ERROR;
+            return 0;
+        }
+
+        info.srcPort = ntohs(tcph->th_sport);
+        info.destPort = ntohs(tcph->th_dport);
+        info.payloadLength -= headerLen;
+        auto dataLen = size-len;
+        if (info.payloadLength > dataLen) {
+            info.data = "[TcpPayloadError]: tcp payload data loss, " ;
+            info.data += parsePayloadToHexString(packet+len, dataLen);
+            info.err = PACKET_TCP_PAYLOAD_LOST_ERROR;
+            return 0;
+        }
+        return len;
+    }
+
+    static size_t parseUDP(const unsigned char* packet, const uint32_t& size, PacketInfo &info) {
+        info.protocolType = PROTOCOL_TYPE_UDP;
+        auto len = sizeof(udp_header);
+        if (size < len) {
+            info.data = "[UdpHeaderError]: the packet length is less than the udp header minimum value " ;
+            info.err = PACKET_TCP_HEADER_LOST_ERROR;
+            return 0;
+        }
+        struct udp_header* udph = (struct udp_header*)(packet);
+        info.srcPort = ntohs(udph->uh_sport);
+        info.destPort = ntohs(udph->uh_dport);
+        // 这里可以根据需要将 UDP 报文的其他字段也解析出来
+        //info.payloadLength -= len;
+        info.payloadLength = ntohs(udph->uh_len)-len;
+        auto dataLen = size-len;
+        if (info.payloadLength > dataLen) {
+            info.data = "[UdpPayloadError]: udp payload data loss, " ;
+            info.data += parsePayloadToHexString(packet+len, dataLen);
+            info.err = PACKET_UDP_PAYLOAD_LOST_ERROR;
+            return 0;
+        }
+        return len;
+    }
+
+    PacketInfo parseIpPacket(const unsigned char* packet, const uint32_t& size) {
+        PacketInfo info;
+        info.protocolType = PROTOCOL_TYPE_DEFAULT;
+        info.err = PACKET_NO_ERROR;
+
+        if (size < ETHERNET_IP_UDP_HEADER_MIN) {
+            if (size > 0)
+                info.data = "[SnapLengthError]: capture length less than udp header min length 42";
+            else
+                info.data = "[SnapLengthError]: capture length is 0";
+            info.err = PACKET_SYSTEM_ERROR;
             return info;
         }
 
-        ss.clear();
-        uint8_t version = iph->ihl_and_version >> 4;  //取高四位作为版本号
-        if (version == 4) {
-            // 解析IPv4地址
-            struct in_addr ip_addr;
-            ip_addr.s_addr = iph->iph_sourceip;
-            info.srcIP = inet_ntoa(ip_addr);
-            ip_addr.s_addr = iph->iph_destip;
-            info.destIP = inet_ntoa(ip_addr);
+        if (!parseEthernet(packet, size, info))
+            return info;
 
-            // 计算 IP 头部的长度
-            //uint8_t version = (ip->ihl_and_version >> 4) & 0xF;
-            size_t ipHeaderLen = (ip->ihl_and_version & 0xF) * 4;
+        size_t offset = sizeof(ethernet_header);
+        if (4 == info.protocolType)
+            offset = parseIPv4(packet+offset,info);
+        else
+            offset = parseIPv6(packet+offset,info);
+        if (0 == offset)
+            return info;
 
-            // 获取协议类型 (TCP 或 UDP)
-            size_t protocolHeaderLen = 0;
-            if (ip->iph_protocol == IPPROTO_TCP) {
-                // TCP 头的长度 (可能包括选项)
-                auto len = sizeof(ethernet_header) + ipHeaderLen + sizeof(tcp_header);
-                if (size < len) {
-                    ss << "[TcpHeaderError]: capture length " << size << " less than tcp header min length " << len << ", ";
-                    info.info = ss.str()+parseIPPacketToHexString(buf, size);
-                    return info;
-                }
-
-                const tcp_header* tcp = reinterpret_cast<const tcp_header*>(packet + sizeof(ethernet_header) + ipHeaderLen);
-                if (!tcp) {
-                    info.info  = "[SystemError]: parse tcp header failed, ";
-                    info.info += parseIPPacketToHexString(buf, size);
-                    return info;
-                }
-
-                protocolHeaderLen = ((tcp->data_offset_and_reserved >> 4) & 0xF) * 4; // 提取 th_off 的值
-                if (protocolHeaderLen  == 0) {
-                    printf("tcp header error: header length is 0 and  data_offset_and_reserved %d \n", tcp->data_offset_and_reserved);
-                    err = CapturePacketError::UdpHeaderLostError;
-                    return info;
-                }
-            }
-            else if (ip->iph_protocol == IPPROTO_UDP) {
-                auto len = sizeof(ethernet_header) + ipHeaderLen + sizeof(udp_header);
-                if (size < len) {
-                    printf("udp header error: capture length:%d, udp header min length:%zu \n", size, len);
-                    err = CapturePacketError::UdpHeaderLostError;
-                    return info;
-                }
-
-                // UDP 头的长度是固定的
-                protocolHeaderLen = sizeof(udp_header);
-            }
-            else {
-                err = CapturePacketError::NoError;
+        size_t headerLen{0};
+        switch (info.protocolType) {
+            case IPPROTO_TCP:
+                headerLen = parseTCP(packet+offset, size - offset, info);
+                break;
+            case IPPROTO_UDP:
+                headerLen = parseUDP(packet+offset, size - offset, info);
+                break;
+            default:
+                info.data = "[NoError]: current protocol is not tcp or udp";
                 return info;
-            }
-
-            auto len = sizeof(ethernet_header) + ipHeaderLen + protocolHeaderLen;
-            if (size < len) {
-                printf("protocol header error: capture length:%d, protocol header min length:%zu \n", size, len);
-                err = CapturePacketError::ProtocolHeaderLostError;
-                return info;
-            }
-        } else if (version == 6) {
-            // 解析IPv6地址
-            struct ip6_header *iph6 = (struct ip6_header *)buffer;
-            char ip6str[INET6_ADDRSTRLEN];
-            inet_ntop(AF_INET6, iph6->src_addr, ip6str, INET6_ADDRSTRLEN);
-            info.srcIP = ip6str;
-            inet_ntop(AF_INET6, iph6->dst_addr, ip6str, INET6_ADDRSTRLEN);
-            info.destIP = ip6str;
-
-            info.len = 0;
-            info.info = parseIPPacketToHexString(buf, size);
         }
+        if (0 == headerLen)
+            return info;
 
+        offset += headerLen;
+        info.data = parsePayloadToHexString(packet+offset, info.payloadLength);
         return info;
     }
 

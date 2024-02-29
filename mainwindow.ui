@@ -17,7 +17,18 @@
    <iconset resource="resource.qrc">
     <normaloff>:/images/resource/icons/main_window.ico</normaloff>:/images/resource/icons/main_window.ico</iconset>
   </property>
-  <widget class="QWidget" name="centralWidget"/>
+  <widget class="QWidget" name="centralWidget">
+   <widget class="QTableView" name="tableView">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>-9</y>
+      <width>801</width>
+      <height>401</height>
+     </rect>
+    </property>
+   </widget>
+  </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
@@ -82,7 +93,7 @@
     <enum>TopToolBarArea</enum>
    </attribute>
    <attribute name="toolBarBreak">
-    <bool>true</bool>
+    <bool>false</bool>
    </attribute>
    <addaction name="actionStart"/>
    <addaction name="actionPasue"/>

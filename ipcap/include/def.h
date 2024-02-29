@@ -196,19 +196,66 @@ namespace figkey {
         DiagnosticNegativeAck = 0x8003
     };
 
+    enum PACKET_ERROR : uint8_t {
+        PACKET_NO_ERROR = 0,
+        PACKET_SYSTEM_ERROR,                  // 系统环境错误
+        PACKET_SNAP_LENGTH_ERROR,             // 捕获异常
+        PACKET_ETHERNET_TYPE_UNKNOWN,         // 以太网类型未知
+        PACKET_IPV4_HEADER_LOST_ERROR,        // IPv4 包丢失
+        PACKET_IPV6_HEADER_LOST_ERROR,        // IPv6 包丢失
+        PACKET_TCP_HEADER_LOST_ERROR,         // TCP 包丢失
+        PACKET_TCP_HEADER_OFFSET_ERROR,       // TCP 头偏移量错误
+        PACKET_UDP_HEADER_LOST_ERROR,         // UDP 包丢失
+        PACKET_TCP_PAYLOAD_LOST_ERROR,        // TCP 数据缺失
+        PACKET_UDP_PAYLOAD_LOST_ERROR,        // UDP 数据缺失
+
+        PACKET_IP_VERSION_UNKNOWN,            // IP 版本未知
+        PACKET_IP_HEADER_LENGTH_ERROR,        // 头部长度错误
+        PACKET_IP_TOTAL_LENGTH_ERROR,         // IP 包不完整
+        PACKET_IP_TTL_INVALID_OR_WARN,        // TTL 为0或 1
+        PACKET_IP_INVALID_CHECKSUM,           // 无效校验和
+
+        PACKET_TCP_INVALID_SOURCE_PORT,
+        PACKET_TCP_INVALID_DESTINATION_PORT,
+        PACKET_TCP_HEADER_LENGTH_ERROR,       // 头部长度错误
+        PACKET_TCP_INVALID_CHECKSUM,          // 无效校验和
+        PACKET_TCP_RETRANSMISSION,            // 重传
+        PACKET_TCP_OUT_OF_ORDER,              // 乱序
+        PACKET_TCP_LOST_SEGMENT,              // 丢失分段
+        PACKET_TCP_DUPLICATE_ACK,             // 重复确认
+        PACKET_TCP_WINDOW_FULL,               // 窗口已满
+        PACKET_TCP_ZERO_WINDOW,               // 零窗口（流量控制）
+
+        PACKET_UDP_HEADER_LENGTH_ERROR,       // 头部长度错误
+        PACKET_UDP_INVALID_CHECKSUM,          // 无效校验和
+        PACKET_UDP_PORT_UNREACHABLE           // 端口不可达
+        // ... 其他错误
+    };
+
+    enum PACKET_TYPE : uint8_t {
+        PROTOCOL_TYPE_DEFAULT,
+        PROTOCOL_TYPE_IPV4,
+        PROTOCOL_TYPE_IPV6,
+        PROTOCOL_TYPE_TCP,
+        PROTOCOL_TYPE_UDP,
+        PROTOCOL_TYPE_DOIP,
+        PROTOCOL_TYPE_UDS
+    };
+
     struct PacketInfo
     {
-        uint64_t index;                  // 索引
+        uint64_t index{0};               // 索引
         std::string timestamp;           // 时间戳
-        std::string srcIP;               // 源IP
-        std::string destIP;              // 目标IP
+        uint8_t err;                     // 错误码
+        std::string srcIP{""};           // 源IP
+        std::string destIP{""};          // 目标IP
         std::string srcMAC;              // 源MAC
         std::string destMAC;             // 目标MAC
-        short srcPort;                   // 源端口
-        short destPort;                  // 目标端口
-        int   len;                       // 数据长度
+        uint16_t srcPort;                // 源端口
+        uint16_t destPort;               // 目标端口
+        uint16_t payloadLength;          // 负载长度
         uint8_t protocolType;            // 协议类型，使用枚举类表示
-        std::string info;                // 信息
+        std::string data;                // 信息
     };
 
 }  // namespace figkey
