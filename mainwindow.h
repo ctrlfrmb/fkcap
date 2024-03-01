@@ -1,9 +1,9 @@
 ﻿#ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
 #include "sqlite.h"
 #include "packeinfo.h"
+#include <QMainWindow>
 #include <QCloseEvent>
 #include <QStandardItemModel>
 
@@ -35,14 +35,19 @@ private slots:
 
     void on_actionPause_triggered();
 
+    void on_actionFilter_triggered();
+
 private:
     void initTableView();
     void initTreeView();
     void initWindow();
     void updateTreeView();
+    void pauseCapture();
+    void reumeCapture();
 
 private:
     Ui::MainWindow *ui;
+
     SqliteCom db;
     PacketInfoModel *pim;
     QStandardItemModel *tvm;

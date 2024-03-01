@@ -16,9 +16,16 @@
 #include <vector>
 #include <string>
 
-#define CAPTURE_SNAP_LENGTH 65536
+#define ETHERNET_MTU_MAX 1500
+#define CAPTURE_SNAP_LENGTH (ETHERNET_MTU_MAX*10)  //MTU
 #define CAPTURE_PROMISC 1
+#define ETHERNET_IPV4_HEADER_MIN (14+20)
+#define ETHERNET_IPV6_HEADER_MIN (14+40)
+#define ETHERNET_IP_TCP_HEADER_MIN (14+20+20)
+#define ETHERNET_IP_UDP_HEADER_MIN (14+20+8)
+
 #define CONFIG_ROOT_NODE_NAME "ipcap"
+#define CONFIG_CAPTURE_PROTOCOL_NODE "CaptureProtocol"
 #define CONFIG_DISPLAY_ROWS "DisplayRows"
 #define CONFIG_TIME_UPDATE_UI "TimeUpdateUI"
 #define CONFIG_SAVE_LOG_NODE "CaptureType"
@@ -33,57 +40,51 @@
 
 namespace figkey {
 
-    enum class CapturePacketError : uint8_t {
-        NoError = 0,
-        SystemError,                // 系统环境错误
-        SnapLengthError,            // 捕获异常
-        IpHeaderLostError,          // IP 包丢失
-        TcpHeaderLostError,         // TCP 包丢失
-        TcpHeaderOffsetError,       // TCP 头偏移量错误
-        UdpHeaderLostError,         // UDP 包丢失
-        ProtocolHeaderLostError     // 协议头丢失
+
+    enum PACKET_TYPE : uint8_t {
+        PROTOCOL_TYPE_DEFAULT,
+        PROTOCOL_TYPE_IPV4,
+        PROTOCOL_TYPE_IPV6,
+        PROTOCOL_TYPE_TCP,
+        PROTOCOL_TYPE_UDP,
+        PROTOCOL_TYPE_DOIP,
+        PROTOCOL_TYPE_UDS
+    };
+
+    enum PACKET_ERROR : uint8_t {
+        PACKET_NO_ERROR = 0,
+        PACKET_SYSTEM_ERROR,                  // 系统环境错误
+        PACKET_SNAP_LENGTH_ERROR,             // 捕获异常
+        PACKET_ETHERNET_TYPE_UNKNOWN,         // 以太网类型未知
+        PACKET_IPV4_HEADER_LOST_ERROR,        // IPv4 包丢失
+        PACKET_IPV6_HEADER_LOST_ERROR,        // IPv6 包丢失
+        PACKET_TCP_HEADER_LOST_ERROR,         // TCP 包丢失
+        PACKET_TCP_HEADER_OFFSET_ERROR,       // TCP 头偏移量错误
+        PACKET_UDP_HEADER_LOST_ERROR,         // UDP 包丢失
+        PACKET_TCP_PAYLOAD_LOST_ERROR,        // TCP 数据缺失
+        PACKET_UDP_PAYLOAD_LOST_ERROR,        // UDP 数据缺失
+
+        PACKET_IP_VERSION_UNKNOWN,            // IP 版本未知
+        PACKET_IP_HEADER_LENGTH_ERROR,        // 头部长度错误
+        PACKET_IP_TOTAL_LENGTH_ERROR,         // IP 包不完整
+        PACKET_IP_TTL_INVALID_OR_WARN,        // TTL 为0或 1
+        PACKET_IP_INVALID_CHECKSUM,           // 无效校验和
+
+        PACKET_TCP_INVALID_SOURCE_PORT,
+        PACKET_TCP_INVALID_DESTINATION_PORT,
+        PACKET_TCP_HEADER_LENGTH_ERROR,       // 头部长度错误
+        PACKET_TCP_INVALID_CHECKSUM,          // 无效校验和
+        PACKET_TCP_RETRANSMISSION,            // 重传
+        PACKET_TCP_OUT_OF_ORDER,              // 乱序
+        PACKET_TCP_LOST_SEGMENT,              // 丢失分段
+        PACKET_TCP_DUPLICATE_ACK,             // 重复确认
+        PACKET_TCP_WINDOW_FULL,               // 窗口已满
+        PACKET_TCP_ZERO_WINDOW,               // 零窗口（流量控制）
+
+        PACKET_UDP_HEADER_LENGTH_ERROR,       // 头部长度错误
+        PACKET_UDP_INVALID_CHECKSUM,          // 无效校验和
+        PACKET_UDP_PORT_UNREACHABLE           // 端口不可达
         // ... 其他错误
-    };
-
-    enum class IpError : uint8_t {
-        NoError = 0,
-        VersionUnknown,             // IP 版本未知
-        HeaderLengthError,          // 头部长度错误
-        TotalLengthError,           // IP 包不完整
-        TTLInvalidOrWarn,           // TTL 为0或 1
-        InvalidChecksum             // 无效校验和
-    };
-
-    enum class TcpError : uint8_t {
-        NoError = 0,
-        InvalidSourcePort,
-        InvalidDestinationPort,
-        HeaderLengthError,          // 头部长度错误
-        InvalidChecksum,            // 无效校验和
-        Retransmission,             // 重传
-        OutOfOrder,                 // 乱序
-        LostSegment,                // 丢失分段
-        DuplicateAck,               // 重复确认
-        WindowFull,                 // 窗口已满
-        ZeroWindow                  // 零窗口（流量控制）
-        // ... 其他错误
-    };
-
-    enum class UdpError : uint8_t {
-        NoError = 0,
-        HeaderLengthError,          // 头部长度错误
-        InvalidChecksum,            // 无效校验和
-        PortUnreachable             // 端口不可达
-        // ... 其他错误
-    };
-
-    // Enumeration for capture packet type
-    enum class ProtocolType : uint8_t {
-        DEFAULT = 0x0,         //默认TCP/UDP数据
-        TCP=0x02,
-        UDP=0x04,
-        DOIP=0x08,              //监控DOIP数据
-        UDS=0x10                //监控UDS数据
     };
 
     // Structure for storing ip address information
@@ -99,15 +100,28 @@ namespace figkey {
         std::vector<IpAddressInfo> address;
     };
 
+    // Structure for setting filter capture information
+    struct FilterInfo {
+        std::string srcIP{""};              // 源IP
+        std::string destIP{""};             // 目标IP
+        std::string srcMAC{""};             // 源MAC
+        std::string destMAC{""};            // 目标MAC
+        uint16_t srcPort{0};                // 源端口
+        uint16_t destPort{0};               // 目标端口
+        uint8_t protocolType{0};            // 协议类型，使用枚举类表示
+        uint16_t minLen{0};                 // 负载长度
+        uint16_t maxLen{0};                 // 负载长度
+    };
+
     // Structure for load capture config information
     struct CaptureConfigInfo {
         uint16_t displayRows{100};
         uint16_t timeUpdateUI{1000};        //ms
         NetworkInfo network;
-        ProtocolType type{ ProtocolType::DEFAULT };
+        FilterInfo filter;
         bool save{ true };
         bool async{ false };
-        std::string filter{ "udp or tcp" };
+        std::string captureFilter{ "udp or tcp" };
     };
 
     // Structure for storing packet logger information
@@ -199,52 +213,6 @@ namespace figkey {
         DiagnosticMessage = 0x8001,
         DiagnosticPositiveAck = 0x8002,
         DiagnosticNegativeAck = 0x8003
-    };
-
-    enum PACKET_ERROR : uint8_t {
-        PACKET_NO_ERROR = 0,
-        PACKET_SYSTEM_ERROR,                  // 系统环境错误
-        PACKET_SNAP_LENGTH_ERROR,             // 捕获异常
-        PACKET_ETHERNET_TYPE_UNKNOWN,         // 以太网类型未知
-        PACKET_IPV4_HEADER_LOST_ERROR,        // IPv4 包丢失
-        PACKET_IPV6_HEADER_LOST_ERROR,        // IPv6 包丢失
-        PACKET_TCP_HEADER_LOST_ERROR,         // TCP 包丢失
-        PACKET_TCP_HEADER_OFFSET_ERROR,       // TCP 头偏移量错误
-        PACKET_UDP_HEADER_LOST_ERROR,         // UDP 包丢失
-        PACKET_TCP_PAYLOAD_LOST_ERROR,        // TCP 数据缺失
-        PACKET_UDP_PAYLOAD_LOST_ERROR,        // UDP 数据缺失
-
-        PACKET_IP_VERSION_UNKNOWN,            // IP 版本未知
-        PACKET_IP_HEADER_LENGTH_ERROR,        // 头部长度错误
-        PACKET_IP_TOTAL_LENGTH_ERROR,         // IP 包不完整
-        PACKET_IP_TTL_INVALID_OR_WARN,        // TTL 为0或 1
-        PACKET_IP_INVALID_CHECKSUM,           // 无效校验和
-
-        PACKET_TCP_INVALID_SOURCE_PORT,
-        PACKET_TCP_INVALID_DESTINATION_PORT,
-        PACKET_TCP_HEADER_LENGTH_ERROR,       // 头部长度错误
-        PACKET_TCP_INVALID_CHECKSUM,          // 无效校验和
-        PACKET_TCP_RETRANSMISSION,            // 重传
-        PACKET_TCP_OUT_OF_ORDER,              // 乱序
-        PACKET_TCP_LOST_SEGMENT,              // 丢失分段
-        PACKET_TCP_DUPLICATE_ACK,             // 重复确认
-        PACKET_TCP_WINDOW_FULL,               // 窗口已满
-        PACKET_TCP_ZERO_WINDOW,               // 零窗口（流量控制）
-
-        PACKET_UDP_HEADER_LENGTH_ERROR,       // 头部长度错误
-        PACKET_UDP_INVALID_CHECKSUM,          // 无效校验和
-        PACKET_UDP_PORT_UNREACHABLE           // 端口不可达
-        // ... 其他错误
-    };
-
-    enum PACKET_TYPE : uint8_t {
-        PROTOCOL_TYPE_DEFAULT,
-        PROTOCOL_TYPE_IPV4,
-        PROTOCOL_TYPE_IPV6,
-        PROTOCOL_TYPE_TCP,
-        PROTOCOL_TYPE_UDP,
-        PROTOCOL_TYPE_DOIP,
-        PROTOCOL_TYPE_UDS
     };
 
     struct PacketInfo

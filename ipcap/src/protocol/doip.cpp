@@ -196,16 +196,11 @@ namespace figkey {
     {
 	}
 
-	bool DoIPPacketParse::parse(uint8_t protocol, PacketLoggerInfo info, std::vector<uint8_t> packet)
-	{
-        static std::function<bool(DoIPPayloadType, PacketLoggerInfo, std::vector<uint8_t>)> udsParse = std::bind(&UDSPacketParse::parse, &UDSPacketParse::Instance(),
-            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-
-        std::unique_lock<std::mutex> locker(mutexParse);
-
+    bool DoIPPacketParse::parse(uint8_t& protocol, const std::vector<uint8_t>& packet)
+    {
 		bool isTCP{ true };
 		// TCP 或 UDP 头解析
-		if (protocol == IPPROTO_UDP)
+        if (protocol == PROTOCOL_TYPE_UDP)
 			isTCP = false;
 
 		auto doipPacket = DoIPPacket::parse(packet, isTCP);
@@ -213,25 +208,11 @@ namespace figkey {
 		if (!doipPacket.isValid())
 			return false;
 
-        std::string doipLog;
-        if (info.index.empty())
-            info.index = getCapturePacketCouter(ProtocolType::DOIP);
-
-        // 获取线程池的实例
-        opensource::ctrlfrmb::ThreadPool& pool = opensource::ctrlfrmb::ThreadPool::Instance();
         std::vector<uint8_t> payload(doipPacket.data.begin()+ DoIPHeaderLength, doipPacket.data.end());
-        pool.submit(udsParse, doipPacket.payloadType, info, payload);
-
-        //if (logger)
-        {
-            std::string doipLog(info.index);
-            doipLog += ",";
-
-            doipLog += info.timestamp;
-            doipLog += info.address;
-            doipLog += parsePacketDataToHexString(doipPacket.data);
-            //logger->write(doipLog);
-		}
+        if (UDSPacketParse::Instance().parse(doipPacket.payloadType, payload))
+             protocol = PROTOCOL_TYPE_UDS;
+        else
+             protocol = PROTOCOL_TYPE_DOIP;
 
 		return true;
 	}

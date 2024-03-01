@@ -35,9 +35,6 @@ namespace figkey {
     }
 
     void NpcapCom::pcapHandler(u_char* user, const struct pcap_pkthdr* pkthdr, const u_char* packet) {
-        static std::function<bool(unsigned char*, struct timeval, unsigned int, unsigned int)> ipParse = std::bind(&IPPacketParse::parse, &IPPacketParse::Instance(),
-            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
-
         NpcapCom* processor = reinterpret_cast<NpcapCom*>(user);
         if (nullptr == processor) {
             std::cerr << "Fatal error: NpcapCom is null" << std::endl;
@@ -47,19 +44,13 @@ namespace figkey {
         if (!processor->isRunning)
             return;
 
-        u_char* buf = nullptr;
-        if (pkthdr->caplen <= CAPTURE_SNAP_LENGTH)  // 确保caplen小于等于捕获长度
+        if (pkthdr->caplen > CAPTURE_SNAP_LENGTH)  // 确保caplen小于等于捕获长度
         {
-            // 创建足够大小的缓冲区
-            buf = new u_char[pkthdr->caplen];
-
-            // 将数据拷贝到缓冲区中
-            memcpy(buf, packet, pkthdr->caplen);
+            std::cerr << "Fatal error: Capture length exceeds limit, capture length is "<< pkthdr->caplen << std::endl;
+            return;
         }
 
-        // 获取线程池的实例
-        opensource::ctrlfrmb::ThreadPool& pool = opensource::ctrlfrmb::ThreadPool::Instance();
-        pool.submit(ipParse, buf, pkthdr->ts, pkthdr->caplen, pkthdr->len);
+        IPPacketParse::Instance().parse(pkthdr, packet);
     }
 
     std::vector<NetworkInfo> NpcapCom::getNetworkList() {
@@ -135,6 +126,10 @@ namespace figkey {
         isRunning = flag;
     }
 
+    bool NpcapCom::getIsRunning() const {
+        return isRunning;
+    }
+
     bool NpcapCom::pcapOpen() {
         if (handle != NULL)
             return true;
@@ -197,7 +192,7 @@ namespace figkey {
     {
         // 设置过滤器（例如只捕获TCP数据包）
         struct bpf_program filter;
-        if (pcap_compile(handle, &filter, figkey::CaptureConfig::Instance().getConfigInfo().filter.c_str(), CAPTURE_PROMISC, netmask) < 0) {
+        if (pcap_compile(handle, &filter, figkey::CaptureConfig::Instance().getConfigInfo().captureFilter.c_str(), CAPTURE_PROMISC, netmask) < 0) {
             std::cerr << "Bad filter - " << pcap_geterr(handle) << std::endl;
             return false;
         }

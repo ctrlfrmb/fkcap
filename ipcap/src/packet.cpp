@@ -14,136 +14,7 @@
 #include <ws2tcpip.h>
 #pragma comment(lib, "ws2_32.lib")
 
-#define ETHERNET_IPV4_HEADER_MIN (14+20)
-#define ETHERNET_IPV6_HEADER_MIN (14+40)
-#define ETHERNET_IP_TCP_HEADER_MIN (14+20+20)
-#define ETHERNET_IP_UDP_HEADER_MIN (14+20+8)
-#define ETHERNET_MTU_MAX 1500
-
 namespace figkey {
-    static std::atomic<uint64_t> packetLogCounter{ 0 };
-    static ProtocolType packetCaptureType{ ProtocolType::DEFAULT };
-
-    const uint8_t ipPacketMinLength{ sizeof(ethernet_header) + sizeof(ip_header)};
-
-    void setProtocolType(ProtocolType type)
-    {
-        packetCaptureType = type;
-    }
-
-    std::string getCapturePacketCouter(ProtocolType type)
-    {
-        if (type == packetCaptureType) {
-            ++packetLogCounter;
-        }
-
-        return std::to_string(packetLogCounter) + ",";
-    }
-
-    std::string getCaptureLoggerDirectory(ProtocolType type)
-    {
-        // 获取当前系统时间
-        auto now = std::chrono::system_clock::now();
-        std::time_t now_c = std::chrono::system_clock::to_time_t(now);
-
-        // 使用 localtime_s 而不是 localtime
-        std::tm timeBuffer;
-        localtime_s(&timeBuffer, &now_c);
-        // 使用 stringstream 进行格式化
-        std::stringstream ss;
-        ss << "fkcap/";
-        ss << std::put_time(&timeBuffer, "%Y%m%d");
-        switch (type)
-        {
-        case ProtocolType::UDS:
-            ss << "/uds";
-            break;
-        case ProtocolType::DOIP:
-            ss << "/doip";
-            break;
-        default:
-            ss << "/ip";
-            break;
-        }
-        return ss.str();
-    }
-
-    // 函数：返回 TCP 或 UDP 负载的起始位置
-    size_t parsePacketProtocolLength(const unsigned char* packet, const uint32_t& size, CapturePacketError& err, uint8_t& protocol) {
-        if (size < ipPacketMinLength) {
-            if (size > 0) {
-                printf("ip header error: capture length:%d, ip header min length:%d \n", size, ipPacketMinLength);
-                err = CapturePacketError::IpHeaderLostError;
-            }
-            else 
-                err = CapturePacketError::NoError;
-            return 0;
-        }
-
-        // 获取 IP 头部的起始位置
-        const ip_header* ip = reinterpret_cast<const ip_header*>(packet + sizeof(ethernet_header));
-        if (!ip) {
-            printf("ip header error for system \n");
-            err = CapturePacketError::SystemError;
-            return 0;
-        }
-
-        // 计算 IP 头部的长度
-        //uint8_t version = (ip->ihl_and_version >> 4) & 0xF;
-        size_t ipHeaderLen = (ip->ihl_and_version & 0xF) * 4;
-
-        // 获取协议类型 (TCP 或 UDP)
-        size_t protocolHeaderLen = 0;
-        if (ip->iph_protocol == IPPROTO_TCP) {
-            // TCP 头的长度 (可能包括选项)
-            auto len = sizeof(ethernet_header) + ipHeaderLen + sizeof(tcp_header);
-            if (size < len) {
-                printf("tcp header error: capture length:%d, tcp header min length:%zu \n", size, len);
-                err = CapturePacketError::TcpHeaderLostError;
-                return 0;
-            }
-
-            const tcp_header* tcp = reinterpret_cast<const tcp_header*>(packet + sizeof(ethernet_header) + ipHeaderLen);
-            if (!tcp) {
-                printf("tcp header error for system \n");
-                err = CapturePacketError::SystemError;
-                return 0;
-            }
-
-            protocolHeaderLen = ((tcp->data_offset_and_reserved >> 4) & 0xF) * 4; // 提取 th_off 的值
-            if (protocolHeaderLen  == 0) {
-                printf("tcp header error: header length is 0 and  data_offset_and_reserved %d \n", tcp->data_offset_and_reserved);
-                err = CapturePacketError::UdpHeaderLostError;
-                return 0;
-            }
-        }
-        else if (ip->iph_protocol == IPPROTO_UDP) {
-            auto len = sizeof(ethernet_header) + ipHeaderLen + sizeof(udp_header);
-            if (size < len) {
-                printf("udp header error: capture length:%d, udp header min length:%zu \n", size, len);
-                err = CapturePacketError::UdpHeaderLostError;
-                return 0;
-            }
-
-            // UDP 头的长度是固定的
-            protocolHeaderLen = sizeof(udp_header);
-        }
-        else {
-            err = CapturePacketError::NoError;
-            return 0;
-        }
-
-        auto len = sizeof(ethernet_header) + ipHeaderLen + protocolHeaderLen;
-        if (size < len) {
-            printf("protocol header error: capture length:%d, protocol header min length:%zu \n", size, len);
-            err = CapturePacketError::ProtocolHeaderLostError;
-            return 0;
-        }
-
-        // 返回负载数据的起始位置
-        protocol = ip->iph_protocol;
-        return len;
-    }
 
     std::string parsePacketTimestamp(const struct timeval& ts) {
         struct tm ltime;
@@ -178,78 +49,8 @@ namespace figkey {
         return str;
     }
 
-    std::string parsePacketAddress(const unsigned char* packet) {
+    std::string parsePayloadToHexString(const std::vector<uint8_t>& data) {
         std::stringstream ss;
-
-        // 以太网帧头解析
-        auto* eth = reinterpret_cast<const ethernet_header*>(packet);
-        ss << "mac[";
-        for (int i = 0; i < 6; i++) {
-            ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(eth->src_mac[i]);
-            if (i < 5) ss << ":";
-        }
-
-        ss << "->";
-        for (int i = 0; i < 6; i++) {
-            ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(eth->dest_mac[i]);
-            if (i < 5) ss << ":";
-        }
-        ss << "],";
-
-        // IP 头解析
-        auto* ip = reinterpret_cast<const ip_header*>(packet + sizeof(ethernet_header));
-
-        ss << "ip[";
-        char sourceIp[INET_ADDRSTRLEN];  // INET_ADDRSTRLEN 用于 IPv4 地址
-        char destIp[INET_ADDRSTRLEN];
-
-        // 使用 inet_ntop 转换 IP 地址
-        //inet_ntop(AF_INET, &ip->iph_sourceip, sourceIp, INET_ADDRSTRLEN);
-        uint32_t non_const_iph_sourceip = ip->iph_sourceip;
-        inet_ntop(AF_INET, &non_const_iph_sourceip, sourceIp, INET_ADDRSTRLEN);
-
-        //inet_ntop(AF_INET, &ip->iph_destip, destIp, INET_ADDRSTRLEN);
-        uint32_t non_const_iph_destip = ip->iph_destip;
-        inet_ntop(AF_INET, &non_const_iph_destip, destIp, INET_ADDRSTRLEN);
-
-        ss << sourceIp << "->" << destIp;
-        ss << "],";
-
-        // TCP 或 UDP 头解析
-        ss << std::dec;
-        uint8_t ihl = ip->ihl_and_version & 0xF;
-        if (ip->iph_protocol == IPPROTO_TCP) {
-            ss << "tcp[";
-            auto* tcp = reinterpret_cast<const tcp_header*>(packet + sizeof(ethernet_header) + (ihl * 4));
-            ss << ntohs(tcp->th_sport);
-            ss << "->" << ntohs(tcp->th_dport);
-            ss << "],";
-        }
-        else if (ip->iph_protocol == IPPROTO_UDP) {
-            ss << "udp[";
-            auto* udp = reinterpret_cast<const udp_header*>(packet + sizeof(ethernet_header) + (ihl * 4));
-            ss << ntohs(udp->uh_sport);
-            ss << "->" << ntohs(udp->uh_dport);
-            ss << "],";
-        }
-
-        return ss.str();
-    }
-
-    std::string parseIPPacketToHexString(const unsigned char* data, size_t length) {
-        std::stringstream ss;
-        ss << std::hex << std::setfill('0');
-
-        for (size_t i = 0; i < length; ++i) {
-            ss << std::setw(2) << static_cast<unsigned>(data[i]) << " ";
-        }
-
-        return ss.str();
-    }
-
-    std::string parsePacketDataToHexString(const std::vector<uint8_t>& data) {
-        std::stringstream ss;
-        ss << "len[" << data.size() << "],";
         ss << std::hex << std::setfill('0');
 
         for (const auto& d : data)
@@ -466,7 +267,7 @@ namespace figkey {
             return info;
 
         offset += headerLen;
-        info.data = parsePayloadToHexString(packet+offset, info.payloadLength);
+        info.index = offset; //temporary storage offset
         return info;
     }
 
@@ -577,18 +378,18 @@ namespace figkey {
         return true;
     }
 
-    IpError checkIpHeader(const ip_header* ipHeader, const size_t& packetSize) {
+    uint8_t checkIpHeader(const ip_header* ipHeader, const size_t& packetSize) {
         if (!checkIpVersion(ipHeader->ihl_and_version))
-            return IpError::VersionUnknown;
+            return PACKET_IP_VERSION_UNKNOWN;
 
         if (!isIpHeaderLengthValid(ipHeader, packetSize))
-            return IpError::HeaderLengthError;
+            return PACKET_IP_HEADER_LENGTH_ERROR;
 
         if (!isIpTotalLengthValid(ipHeader, packetSize))
-            return IpError::TotalLengthError;
+            return PACKET_IP_TOTAL_LENGTH_ERROR;
 
         if (!isIpTtlValid(ipHeader))
-            return IpError::TTLInvalidOrWarn;
+            return PACKET_IP_TTL_INVALID_OR_WARN;
 
         /*校验和为 0 的情况
             某些协议不要求校验和：例如，当使用 IPv4 的某些协议（如 UDP）时，校验和可能是可选的。在这种情况下，校验和字段可能被设置为 0。
@@ -596,56 +397,56 @@ namespace figkey {
         */ 
         uint16_t headerChecksum = ntohs(ipHeader->iph_chksum); // 将网络字节序转换为主机字节序
         if (headerChecksum == 0)
-            return IpError::NoError;
+            return PACKET_NO_ERROR;
 
         auto checkSum = computeIpChecksum(ipHeader);
         if (checkSum != headerChecksum) {
             printf("compute ip checksum error: compute checksum:%d, header checksum:%d\n", checkSum, headerChecksum);
-            return IpError::InvalidChecksum;
+            return PACKET_IP_INVALID_CHECKSUM;
         }
 
-        return IpError::NoError;
+        return PACKET_NO_ERROR;
     }
     
     // 函数：校验 TCP 端口号
-    static TcpError checkTcpPorts(const tcp_header* tcpHeader) {
+    static uint8_t checkTcpPorts(const tcp_header* tcpHeader) {
         // 确保端口号是大端序转换为主机字节序后的非零值
         uint16_t sourcePort = ntohs(tcpHeader->th_sport);
         uint16_t destinationPort = ntohs(tcpHeader->th_dport);
 
         // 检查源端口号是否为非零值
         if (sourcePort == 0) {
-            return TcpError::InvalidSourcePort;
+            return PACKET_TCP_INVALID_SOURCE_PORT;
         }
 
         // 检查目标端口号是否为非零值
         if (destinationPort == 0) {
-            return TcpError::InvalidDestinationPort;
+            return PACKET_TCP_INVALID_DESTINATION_PORT;
         }
 
         // 端口号有效
-        return TcpError::NoError;
+        return PACKET_NO_ERROR;
     }
 
     // 函数：校验 TCP 头部长度
-    static TcpError checkTcpHeaderLength(const tcp_header* tcpHeader) {
+    static uint8_t checkTcpHeaderLength(const tcp_header* tcpHeader) {
         // 提取数据偏移值，它位于头部的第一个字节的高四位
         uint8_t dataOffset = tcpHeader->data_offset_and_reserved >> 4;
 
         // 校验头部长度是否至少为 5（即 TCP 头部最小长度 20 字节）
         if (dataOffset < 5) {
             printf("check tcp header length error: %d less than 5\n", dataOffset);
-            return TcpError::HeaderLengthError;
+            return PACKET_TCP_HEADER_LENGTH_ERROR;
         }
 
         // 校验头部长度是否合理，最大值为 15（即包含最多可选字段的 60 字节）
         if (dataOffset > 15) {
             printf("check tcp header length error: %d greater than 15\n", dataOffset);
-            return TcpError::HeaderLengthError;
+            return PACKET_TCP_HEADER_LENGTH_ERROR;
         }
 
         // 头部长度有效
-        return TcpError::NoError;
+        return PACKET_NO_ERROR;
     }
 
     static uint16_t computeChecksum(const uint16_t* buffer, int size) {
@@ -689,27 +490,27 @@ namespace figkey {
         return computeChecksum(reinterpret_cast<const uint16_t*>(buff.data()), psize);
     }
 
-    TcpError checkTcpHeader(const unsigned char* packet) {
+    uint8_t checkTcpHeader(const unsigned char* packet) {
         // 提取 IP 头和 TCP 头
         const ip_header* ipHeader = reinterpret_cast<const ip_header*>(packet + sizeof(ethernet_header));
         int ipHeaderLen = (ipHeader->ihl_and_version & 0x0F) * 4;
         const tcp_header* tcpHeader = reinterpret_cast<const tcp_header*>(packet + sizeof(ethernet_header) + ipHeaderLen);
 
         auto portCheckError = checkTcpPorts(tcpHeader);
-        if (portCheckError != TcpError::NoError)
+        if (portCheckError != PACKET_NO_ERROR)
             return portCheckError;
 
         auto headerLengthError = checkTcpHeaderLength(tcpHeader);
-        if (headerLengthError != TcpError::NoError) 
+        if (headerLengthError != PACKET_NO_ERROR)
             return headerLengthError;
 
         uint16_t headerChecksum = ntohs(tcpHeader->th_sum); // 将网络字节序转换为主机字节序
         auto checkSum = calculateTcpChecksum(ipHeader, ipHeaderLen, tcpHeader);
         if (checkSum != headerChecksum) {
             printf("compute tcp checksum error: compute checksum:%d, header checksum:%d\n", checkSum, headerChecksum);
-            return TcpError::InvalidChecksum;
+            return PACKET_TCP_INVALID_CHECKSUM;
         }
-        return TcpError::NoError;
+        return PACKET_NO_ERROR;
     }
 #if 0
 

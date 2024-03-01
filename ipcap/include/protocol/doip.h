@@ -12,7 +12,6 @@
 #ifndef FIGKEY_PCAP_DOIP_HPP
 #define FIGKEY_PCAP_DOIP_HPP
 
-#include <mutex>
 #include <iostream>
 #include "def.h"
 
@@ -32,11 +31,9 @@ public:
         return obj;
     }
 
-    bool parse(uint8_t protocol, PacketLoggerInfo info, std::vector<uint8_t> packet);
+    bool parse(uint8_t& protocol, const std::vector<uint8_t>& packet);
 
 private:
-    std::mutex mutexParse;
-
     // DoIP packet parse constructor
     DoIPPacketParse();
 

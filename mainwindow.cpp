@@ -1,5 +1,6 @@
 ﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "filterwindow.h"
 #include "ipcap.h"
 #include "config.h"
 #include "protocol/ip.h"
@@ -20,6 +21,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    figkey::NpcapCom::Instance().stopCapture();
+
     if (m_timerUpdateUI)
         delete m_timerUpdateUI;  // 在析构函数中删除定时器
     if (pim)
@@ -137,22 +140,22 @@ void MainWindow::updateTreeView() {
 }
 
 void MainWindow::updateUI() {
-    ui->tableView->update();  // 或者你需要的其他刷新表格的操作
-    updateTreeView(); //更新Treeview
+    if (figkey::NpcapCom::Instance().getIsRunning()) {
+        ui->tableView->update();  // 或者你需要的其他刷新表格的操作
+        updateTreeView(); //更新Treeview
+    }
 }
 
 void MainWindow::processPacket(figkey::PacketInfo packetInfo)
 {
-    qDebug() <<packetInfo.index<<", payload length:"<<packetInfo.payloadLength;
-    if (packetInfo.index == 0)
-        qDebug() << packetInfo.srcIP.c_str()<<"->"<<packetInfo.destIP.c_str()<<" payload length:"
-             <<packetInfo.payloadLength<<", "<<packetInfo.data.c_str();
-    else
-        pim->addPacket(std::move(packetInfo));
+    static QAtomicInt count{0};
+    qDebug() <<"capture "<<++count;
+    pim->addPacket(std::move(packetInfo));
 }
 
 void MainWindow::on_actionStop_triggered()
 {
+    qDebug() <<"stop capture";
     figkey::NpcapCom::Instance().stopCapture();
 
     ui->actionStart->setEnabled(true);
@@ -162,6 +165,7 @@ void MainWindow::on_actionStop_triggered()
 
 void MainWindow::on_actionStart_triggered()
 {
+    qDebug() <<"start capture";
     figkey::NpcapCom::Instance().asyncStartCapture();
 
     ui->actionStart->setEnabled(false);
@@ -169,10 +173,11 @@ void MainWindow::on_actionStart_triggered()
     ui->actionStop->setEnabled(true);
 }
 
-void MainWindow::on_actionPause_triggered()
+void MainWindow::pauseCapture()
 {
     auto& pcap = figkey::NpcapCom::Instance();
     if (ui->actionPause->text() == "Pause") {
+        qDebug() <<"pause capture";
         ui->actionPause->setText("Resume");
         QIcon icon(":/images/resource/icons/capture_resume.png");
         ui->actionPause->setIcon(icon);
@@ -180,10 +185,28 @@ void MainWindow::on_actionPause_triggered()
         pcap.setIsRunning(false);
     }
     else {
+        qDebug() <<"resume capture";
         ui->actionPause->setText("Pause");
         QIcon icon(":/images/resource/icons/capture_pause.png");
         ui->actionPause->setIcon(icon);
 
         pcap.setIsRunning(true);
     }
+}
+
+void MainWindow::on_actionPause_triggered()
+{
+    pauseCapture();
+}
+
+void MainWindow::on_actionFilter_triggered()
+{
+    pauseCapture();
+
+    FilterWindow f;
+    f.adjustSize();
+    f.setFixedSize(f.size());
+    f.exec();
+
+    pauseCapture();
 }

@@ -24,8 +24,11 @@ public:
     figkey::PacketInfo getFirstPacket();
 
 private:
+    QString getProtocolName(uint8_t protocolType) const;
+
     QVector<figkey::PacketInfo> m_data;
     mutable QMutex m_mutex;  // 增加一个互斥体成员变量
+    uint64_t packetCounter{ 0 };
     uint16_t m_rows;
 };
 

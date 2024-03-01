@@ -26,7 +26,8 @@ SOURCES += main.cpp\
     ipcap/src/packet.cpp \
     devicewindow.cpp \
     sqlite.cpp \
-    packeinfo.cpp
+    packeinfo.cpp \
+    filterwindow.cpp
 
 HEADERS  += mainwindow.h \
     include/common/thread_pool.hpp \
@@ -59,10 +60,12 @@ HEADERS  += mainwindow.h \
     ipcap/include/testip.h \
     devicewindow.h \
     sqlite.h \
-    packeinfo.h
+    packeinfo.h \
+    filterwindow.h
 
 FORMS    += mainwindow.ui \
-    devicewindow.ui
+    devicewindow.ui \
+    filterwindow.ui
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/include/npcap1.13/lib/x86_64/ -lwpcap
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/include/npcap1.13/lib/x86_64/ -lwpcap

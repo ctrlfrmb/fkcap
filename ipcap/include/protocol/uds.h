@@ -13,7 +13,6 @@
 #define FIGKEY_PCAP_UDS_HPP
 
 #include <vector>
-#include <mutex>
 #include "def.h"
 
 namespace figkey {
@@ -32,10 +31,9 @@ namespace figkey {
             return obj;
         }
 
-        bool parse(DoIPPayloadType type, PacketLoggerInfo info, std::vector<uint8_t> packet);
+        bool parse(DoIPPayloadType type, const std::vector<uint8_t>& packet);
 
     private:
-        std::mutex mutexParse;
 
         // UDS packet parse constructor
         UDSPacketParse();

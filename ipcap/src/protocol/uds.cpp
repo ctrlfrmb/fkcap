@@ -38,7 +38,7 @@ namespace figkey {
 
         // 检查数据是否为 UDS 数据
         static bool checkUdsDataFormat(const std::vector<uint8_t>& data) {
-            std::cout<<"uds: "<< parsePacketDataToHexString(data)<<std::endl;
+            std::cout<<"uds: "<< parsePayloadToHexString(data)<<std::endl;
             if (data.empty() || (data.size() <= DoIPUDSHeaderLength)) {
                 return false;
             }
@@ -80,35 +80,10 @@ namespace figkey {
     {
 	}
 
-	bool UDSPacketParse::parse(DoIPPayloadType type, PacketLoggerInfo info, std::vector<uint8_t> packet)
-	{
-        std::unique_lock<std::mutex> locker(mutexParse);
-
+    bool UDSPacketParse::parse(DoIPPayloadType type, const std::vector<uint8_t>& packet)
+    {
 		if (!UDSChecker::isUdsData(type, packet))
 			return false;
-
-        //if (logger)
-        {
-            if (info.index.empty()) 
-                info.index = getCapturePacketCouter(ProtocolType::UDS);
-
-            std::string udsLog(info.index);
-            udsLog += ",";
-
-            udsLog += info.timestamp;
-            udsLog += info.address;
-            {
-                std::stringstream ss;
-                ss << "doip[0x";
-                ss << std::hex << std::setfill('0');
-                ss << std::setw(2) << static_cast<unsigned>(packet[0]) << std::setw(2) << static_cast<unsigned>(packet[1]) << "->0x";
-                ss << std::setw(2) << static_cast<unsigned>(packet[2]) << std::setw(2) << static_cast<unsigned>(packet[3]) << "],";
-                udsLog += ss.str();
-            }
-            std::vector<uint8_t> data(packet.begin()+ DoIPUDSHeaderLength, packet.end());
-            udsLog += parsePacketDataToHexString(data);
-            //logger->write(udsLog);
-		}
 
 		return true;
 	}

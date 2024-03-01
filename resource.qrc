@@ -6,5 +6,7 @@
         <file>resource/icons/capture_start.png</file>
         <file>resource/icons/capture_stop.png</file>
         <file>resource/icons/capture_resume.png</file>
+        <file>resource/icons/capture_filter.png</file>
+        <file>resource/icons/capture_nofilter.png</file>
     </qresource>
 </RCC>

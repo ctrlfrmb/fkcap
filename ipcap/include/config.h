@@ -51,6 +51,8 @@ namespace figkey {
 
         void setNetwork(const NetworkInfo& network);
 
+        void setFilter(const FilterInfo& filter);
+
         // 检查地址过滤
         bool checkFilterAddress(const std::string& address);
     };

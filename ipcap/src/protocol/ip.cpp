@@ -22,50 +22,89 @@ namespace figkey {
         packetCallBack = callback;
     }
 
-	bool IPPacketParse::parse(unsigned char* buf, struct timeval ts, unsigned int captureLen, unsigned int packetLen)
-	{
-		static std::function<bool(uint8_t, PacketLoggerInfo, std::vector<uint8_t>)> doipParse = std::bind(&DoIPPacketParse::parse, &DoIPPacketParse::Instance(),
-			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-		
-        PacketInfo info = parseIpPacket(buf, captureLen);
-        info.timestamp = parsePacketTimestamp(ts);
-        if (buf)
-            delete[] buf;
+    bool IPPacketParse::checkFilterInfo(const PacketInfo& packet, const FilterInfo& filter) {
+        if (!filter.srcIP.empty() && filter.srcIP != packet.srcIP) return false;
+        if (!filter.destIP.empty() && filter.destIP != packet.destIP) return false;
+        if (!filter.srcMAC.empty() && filter.srcMAC != packet.srcMAC) return false;
+        if (!filter.destMAC.empty() && filter.destMAC != packet.destMAC) return false;
+        if (filter.srcPort != 0 && filter.srcPort != packet.srcPort) return false;
+        if (filter.destPort != 0 && filter.destPort != packet.destPort) return false;
 
-        std::unique_lock<std::mutex> locker(mutexParse);
-        if (packetCallBack) {
-            if (info.protocolType >= PROTOCOL_TYPE_TCP)
-                info.index = ++packetCounter;
-            packetCallBack(info);
+        // 当滤波器的 minLen 不为零时做最小长度过滤
+        if (filter.minLen != 0) {
+            if (packet.payloadLength < filter.minLen) return false;
         }
-//		if (!CaptureConfig::Instance().checkFilterAddress(info.address)) {
-//			//// 获取 IP 头部的起始位置
-//			const ip_header* ip = reinterpret_cast<const ip_header*>(buf + sizeof(ethernet_header));
-//			auto result = checkIpHeader(ip, capLen - sizeof(ethernet_header));
-//			std::cout << "check ip header result: " <<static_cast<int>(result )<< std::endl;
+        // 当滤波器的 maxLen 不为零时做最大长度过滤
+        if (filter.maxLen != 0) {
+            if (packet.payloadLength > filter.maxLen) return false;
+        }
 
-//			if (protocol == IPPROTO_TCP) {
-//				auto result = checkTcpHeader(buf);
-//				std::cout << "check tcp header result: " << static_cast<int>(result) << std::endl;
-//			}
+        return true;
+    }
 
-//			if (len < capLen) {
-//				std::vector<uint8_t> payload(buf + len, buf + capLen);
-//				// 获取线程池的实例
-//				opensource::ctrlfrmb::ThreadPool& pool = opensource::ctrlfrmb::ThreadPool::Instance();
-//				pool.submit(doipParse, protocol, info, payload);
-//			}
+    bool IPPacketParse::checkFilterProtocol(uint8_t protocl, const FilterInfo& filter) {
+        if (protocl >= filter.protocolType)
+            return true;
 
-//            //if (logger)
-//            {
-//				std::string ipLog(info.index);
-//				ipLog += info.timestamp;
-//				ipLog += info.address;
-//				ipLog += parseIPPacketToHexString(buf, capLen);
-//                //logger->write(ipLog);
-//			}
-//		}
+        return false;
+    }
 
-		return true;
-	}
+    bool IPPacketParse::checkPacket(const struct pcap_pkthdr* pkthdr, PacketInfo&& info, std::vector<uint8_t>&& payload) {
+
+        if (!checkFilterInfo(info, CaptureConfig::Instance().getConfigInfo().filter)) {
+            //std::cout << "filter " << info.srcIP << " -> "<< info.destIP << std::endl;
+            return false;
+        }
+
+        if (!payload.empty())
+            DoIPPacketParse::Instance().parse(info.protocolType, payload);
+        if (!checkFilterProtocol(info.protocolType, CaptureConfig::Instance().getConfigInfo().filter)){
+            //std::cout << "filter by protocol " << info.srcIP << " -> "<< info.destIP <<", "<<static_cast<int>(info.payloadLength)<< std::endl;
+            //if (!payload.empty())
+            //    std::cout << parsePayloadToHexString(payload) << std::endl;
+            return false;
+        }
+
+        info.timestamp = parsePacketTimestamp(pkthdr->ts);
+        info.data = parsePayloadToHexString(payload);
+
+        if (packetCallBack) {
+            opensource::ctrlfrmb::ThreadPool& pool = opensource::ctrlfrmb::ThreadPool::Instance();
+            pool.submit(packetCallBack, info);
+        }
+
+        return true;
+    }
+
+    bool IPPacketParse::parse(const struct pcap_pkthdr* pkthdr, const u_char* packet)
+    {
+        uint32_t offset {0};
+        uint32_t len {pkthdr->caplen};
+
+        while (len >= ETHERNET_IP_UDP_HEADER_MIN)
+        {
+            PacketInfo info = parseIpPacket(packet+offset, len);
+            offset += static_cast<uint32_t>(info.index);
+            std::vector<uint8_t> payload(packet+offset, packet+(offset+info.payloadLength));
+            offset += info.payloadLength;
+            len -= offset;
+            if (info.protocolType < PROTOCOL_TYPE_TCP) {
+                std::cerr << "Fatal error: " << info.data << std::endl;
+                continue;
+            }
+
+            checkPacket(pkthdr, std::move(info), std::move(payload));
+        }
+
+        if (len != 0) {
+            //cache.clear();
+            //if ((offset+len) != pkthdr->caplen)
+                //cache.assign(packet+offset, packet+(pkthdr->caplen-1));
+            //else
+                //std::cerr << "Fatal error: IP package is incomplete!!! remaining length: "<<len <<" capture length: "<<pkthdr->caplen<<" must length: " <<pkthdr->len << std::endl;
+            return false;
+        }
+
+        return true;
+    }
 }

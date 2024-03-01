@@ -36,6 +36,8 @@ public:
 
     void setIsRunning(bool flag);
 
+    bool getIsRunning() const ;
+
     void startCapture();
 
     void asyncStartCapture();

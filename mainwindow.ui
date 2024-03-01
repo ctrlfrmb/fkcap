@@ -79,10 +79,12 @@
     <addaction name="actionStart"/>
     <addaction name="actionPause"/>
     <addaction name="actionStop"/>
+    <addaction name="actionFilter"/>
+    <addaction name="actionFilter_Clear"/>
    </widget>
    <widget class="QMenu" name="menuTool">
     <property name="title">
-     <string>Tool</string>
+     <string>Test</string>
     </property>
    </widget>
    <addaction name="menuDdd"/>
@@ -111,6 +113,8 @@
    <addaction name="actionStart"/>
    <addaction name="actionPause"/>
    <addaction name="actionStop"/>
+   <addaction name="actionFilter"/>
+   <addaction name="actionFilter_Clear"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionAbout">
@@ -143,6 +147,24 @@
    </property>
    <property name="text">
     <string>Stop</string>
+   </property>
+  </action>
+  <action name="actionFilter">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/resource/icons/capture_filter.png</normaloff>:/images/resource/icons/capture_filter.png</iconset>
+   </property>
+   <property name="text">
+    <string>Filter</string>
+   </property>
+  </action>
+  <action name="actionFilter_Clear">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/images/resource/icons/capture_nofilter.png</normaloff>:/images/resource/icons/capture_nofilter.png</iconset>
+   </property>
+   <property name="text">
+    <string>Filter Clear</string>
    </property>
   </action>
  </widget>

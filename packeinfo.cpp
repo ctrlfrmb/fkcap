@@ -21,6 +21,24 @@ int PacketInfoModel::columnCount(const QModelIndex &parent) const
     return 7;
 }
 
+QString PacketInfoModel::getProtocolName(uint8_t protocolType) const
+{
+    switch (protocolType) {
+    case figkey::PROTOCOL_TYPE_TCP:
+        return "TCP";
+    case figkey::PROTOCOL_TYPE_UDP:
+        return "UDP";
+    case figkey::PROTOCOL_TYPE_DOIP:
+        return "DOIP";
+    case figkey::PROTOCOL_TYPE_UDS:
+        return "UDS";
+    default:
+        break;
+    }
+
+    return "UNKNOWN";
+}
+
 QVariant PacketInfoModel::data(const QModelIndex &index, int role) const
 {
     QMutexLocker locker(&m_mutex);  // 需要对 m_data 的访问进行加锁
@@ -34,7 +52,7 @@ QVariant PacketInfoModel::data(const QModelIndex &index, int role) const
         case 1: return QString::fromStdString(packet.timestamp);
         case 2: return QString::fromStdString(packet.srcIP);
         case 3: return QString::fromStdString(packet.destIP);
-        case 4: return packet.protocolType;
+        case 4: return getProtocolName(packet.protocolType);
         case 5: return packet.payloadLength;
         case 6: return QString::fromStdString(packet.data);
         default: break;
@@ -64,6 +82,7 @@ void PacketInfoModel::addPacket(figkey::PacketInfo &&packet)
 {
     m_mutex.lock();  // 开始访问共享资源前进行加锁
 
+    packet.index = ++packetCounter;
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
     m_data.append(packet);
     endInsertRows();

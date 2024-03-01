@@ -55,6 +55,13 @@ namespace figkey {
         if (!LoadConfigFile(path, config))
             return false;
 
+        auto captureFilter = config.find(CONFIG_CAPTURE_PROTOCOL_NODE);
+        if ((captureFilter != config.end()) && !captureFilter->second.empty())
+        {
+            configInfo.captureFilter = captureFilter->second;
+            std::cout << "Capture protocol : " << configInfo.captureFilter << std::endl;
+        }
+
         auto rows = config.find(CONFIG_DISPLAY_ROWS);
         if ((rows != config.end()) && !rows->second.empty())
         {
@@ -76,12 +83,6 @@ namespace figkey {
         auto type = config.find(CONFIG_CAPTURE_TYPE_NODE);
         if ((type != config.end()) && !type->second.empty())
         {
-            if (type->second == "DOIP")
-                configInfo.type = ProtocolType::DOIP;
-            else if (type->second == "UDS")
-                configInfo.type = ProtocolType::UDS;
-            else
-                configInfo.type = ProtocolType::DEFAULT;
             std::cout << "Protocol filtering configuration information : " << type->second << std::endl;
         }
 
@@ -99,11 +100,13 @@ namespace figkey {
             std::cout << "Whether to run configuration information asynchronously : " << (configInfo.async ? "true" : "false") << std::endl;
         }
 
-        auto filter = config.find(CONFIG_FILTER_PROTOCOL_NODE);
-        if ((filter != config.end()) && !filter->second.empty())
+        auto filterProtocol = config.find(CONFIG_FILTER_PROTOCOL_NODE);
+        if ((filterProtocol != config.end()) && !filterProtocol->second.empty())
         {
-            configInfo.filter = filter->second;
-            std::cout << "Protocol filtering configuration information : " << configInfo.filter << std::endl;
+            configInfo.filter.protocolType = std::stoi(filterProtocol->second);
+            if (configInfo.filter.protocolType < PROTOCOL_TYPE_DEFAULT || configInfo.filter.protocolType > PROTOCOL_TYPE_UDS)
+                configInfo.filter.protocolType = PROTOCOL_TYPE_DEFAULT;
+            std::cout << "Protocol filtering configuration information : " << static_cast<int>(configInfo.filter.protocolType) << std::endl;
         }
 
         auto mac = config.find(CONFIG_FILTER_MAC_NODE);
@@ -141,6 +144,10 @@ namespace figkey {
 
     void  CaptureConfig::setNetwork(const NetworkInfo& network) {
         configInfo.network = network;
+    }
+
+    void CaptureConfig::setFilter(const FilterInfo& filter) {
+        configInfo.filter = filter;
     }
 
     // 检查地址过滤

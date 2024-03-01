@@ -12,11 +12,10 @@
 #ifndef FIGKEY_PCAP_IP_HPP
 #define FIGKEY_PCAP_IP_HPP
 
-#include <mutex>
-#include <winsock2.h>
 #include "def.h"
+#include "pcap.h"
+#include <winsock2.h>
 #include <functional>
-#include <atomic>
 
 namespace figkey {
     // 回调函数类型
@@ -40,11 +39,9 @@ namespace figkey {
         // 设置回调函数
         void setCallback(PacketCallback callback);
 
-        bool parse(unsigned char* buf, struct timeval ts, unsigned int captureLen, unsigned int packetLen);
+        bool parse(const struct pcap_pkthdr* pkthdr, const u_char* packet);
 
     private:
-        std::mutex mutexParse;
-        std::atomic<uint64_t> packetCounter{ 0 };
         PacketCallback packetCallBack;
 
         // IP packet parse constructor
@@ -52,6 +49,12 @@ namespace figkey {
 
         // IP packet parse destructor
         ~IPPacketParse();
+
+        bool checkFilterInfo(const PacketInfo& packet, const FilterInfo& filter);
+
+        bool checkFilterProtocol(uint8_t protocl, const FilterInfo& filter);
+
+        bool checkPacket(const struct pcap_pkthdr* pkthdr, PacketInfo&& info, std::vector<uint8_t>&& payload);
     };
 
 }  // namespace figkey
