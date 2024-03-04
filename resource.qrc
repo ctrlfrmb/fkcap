@@ -8,5 +8,7 @@
         <file>resource/icons/capture_resume.png</file>
         <file>resource/icons/capture_filter.png</file>
         <file>resource/icons/capture_nofilter.png</file>
+        <file>resource/icons/doip_client.png</file>
+        <file>resource/icons/doip_server.png</file>
     </qresource>
 </RCC>

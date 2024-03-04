@@ -14,7 +14,7 @@
    <string>Select Device</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="resource.qrc">
+   <iconset resource="../resource.qrc">
     <normaloff>:/images/resource/icons/select_device.png</normaloff>:/images/resource/icons/select_device.png</iconset>
   </property>
   <property name="modal">
@@ -59,7 +59,7 @@
   </widget>
  </widget>
  <resources>
-  <include location="resource.qrc"/>
+  <include location="../resource.qrc"/>
  </resources>
  <connections/>
 </ui>

@@ -1,6 +1,7 @@
 ﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "filterwindow.h"
+#include "doipclientwindow.h"
 #include "ipcap.h"
 #include "config.h"
 #include "protocol/ip.h"
@@ -102,6 +103,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     int ret = QMessageBox::question(this, tr("Tips"), tr("Are you sure to close the program?"), QMessageBox::Yes | QMessageBox::No);
     if (ret == QMessageBox::Yes) {
         // 当你确认需要关闭窗口时，调用此句：
+        figkey::IPPacketParse::Instance().setCallback(nullptr);
         figkey::NpcapCom::Instance().stopCapture();
         m_timerUpdateUI->stop();
         event->accept();
@@ -209,4 +211,22 @@ void MainWindow::on_actionFilter_triggered()
     f.exec();
 
     pauseCapture();
+}
+
+void MainWindow::on_actionFilter_Clear_triggered()
+{
+    pauseCapture();
+
+    figkey::FilterInfo filter;
+    figkey::CaptureConfig::Instance().setFilter(filter);
+
+    pauseCapture();
+}
+
+void MainWindow::on_actionDoIP_Client_triggered()
+{
+    DoIPClientWindow dc;
+    dc.adjustSize();
+    dc.setFixedSize(dc.size());
+    dc.exec();
 }

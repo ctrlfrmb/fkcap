@@ -14,7 +14,7 @@
    <string>Figkey Ip Capture Tool</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="resource.qrc">
+   <iconset resource="../resource.qrc">
     <normaloff>:/images/resource/icons/main_window.ico</normaloff>:/images/resource/icons/main_window.ico</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
@@ -86,6 +86,8 @@
     <property name="title">
      <string>Test</string>
     </property>
+    <addaction name="actionDoIP_Client"/>
+    <addaction name="actionDoIP_Server"/>
    </widget>
    <addaction name="menuDdd"/>
    <addaction name="menuView"/>
@@ -115,6 +117,8 @@
    <addaction name="actionStop"/>
    <addaction name="actionFilter"/>
    <addaction name="actionFilter_Clear"/>
+   <addaction name="actionDoIP_Client"/>
+   <addaction name="actionDoIP_Server"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionAbout">
@@ -124,7 +128,7 @@
   </action>
   <action name="actionStart">
    <property name="icon">
-    <iconset resource="resource.qrc">
+    <iconset resource="../resource.qrc">
      <normaloff>:/images/resource/icons/capture_stop.png</normaloff>:/images/resource/icons/capture_stop.png</iconset>
    </property>
    <property name="text">
@@ -133,7 +137,7 @@
   </action>
   <action name="actionPause">
    <property name="icon">
-    <iconset resource="resource.qrc">
+    <iconset resource="../resource.qrc">
      <normaloff>:/images/resource/icons/capture_pause.png</normaloff>:/images/resource/icons/capture_pause.png</iconset>
    </property>
    <property name="text">
@@ -142,7 +146,7 @@
   </action>
   <action name="actionStop">
    <property name="icon">
-    <iconset resource="resource.qrc">
+    <iconset resource="../resource.qrc">
      <normaloff>:/images/resource/icons/capture_start.png</normaloff>:/images/resource/icons/capture_start.png</iconset>
    </property>
    <property name="text">
@@ -151,7 +155,7 @@
   </action>
   <action name="actionFilter">
    <property name="icon">
-    <iconset resource="resource.qrc">
+    <iconset resource="../resource.qrc">
      <normaloff>:/images/resource/icons/capture_filter.png</normaloff>:/images/resource/icons/capture_filter.png</iconset>
    </property>
    <property name="text">
@@ -160,17 +164,35 @@
   </action>
   <action name="actionFilter_Clear">
    <property name="icon">
-    <iconset resource="resource.qrc">
+    <iconset resource="../resource.qrc">
      <normaloff>:/images/resource/icons/capture_nofilter.png</normaloff>:/images/resource/icons/capture_nofilter.png</iconset>
    </property>
    <property name="text">
     <string>Filter Clear</string>
    </property>
   </action>
+  <action name="actionDoIP_Client">
+   <property name="icon">
+    <iconset resource="../resource.qrc">
+     <normaloff>:/images/resource/icons/doip_client.png</normaloff>:/images/resource/icons/doip_client.png</iconset>
+   </property>
+   <property name="text">
+    <string>DoIP Client</string>
+   </property>
+  </action>
+  <action name="actionDoIP_Server">
+   <property name="icon">
+    <iconset resource="../resource.qrc">
+     <normaloff>:/images/resource/icons/doip_server.png</normaloff>:/images/resource/icons/doip_server.png</iconset>
+   </property>
+   <property name="text">
+    <string>DoIP Server</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="resource.qrc"/>
+  <include location="../resource.qrc"/>
  </resources>
  <connections/>
 </ui>

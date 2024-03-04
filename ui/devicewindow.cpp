@@ -11,22 +11,24 @@ Q_DECLARE_METATYPE(figkey::NetworkInfo)
 
 DeviceWindow::DeviceWindow(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::DeviceWindow)
+    ui(new Ui::DeviceWindow), model(nullptr)
 {
     ui->setupUi(this);
-    LoadDevices();
+    initWindow();
 }
 
 DeviceWindow::~DeviceWindow()
 {
+    if (model)
+        delete model;
     delete ui;
 }
 
-void DeviceWindow::LoadDevices()
+void DeviceWindow::initWindow()
 {
     auto& pcap = figkey::NpcapCom::Instance();
     auto networkList = pcap.getNetworkList();
-    QStandardItemModel *model = new QStandardItemModel();
+    model = new QStandardItemModel();
 
     for (size_t i = 0; i < networkList.size(); ++i) {
         QStandardItem *parentItem = model->invisibleRootItem();
@@ -62,7 +64,7 @@ void DeviceWindow::LoadDevices()
     this->ui->treeView->setModel(model);
 }
 
-void DeviceWindow::ExitWindow()
+void DeviceWindow::exitWindow()
 {
     // 选中项目，关闭窗口
     this->accept();
@@ -80,7 +82,7 @@ void DeviceWindow::on_treeView_doubleClicked(const QModelIndex &index)
 
     CaptureConfig::Instance().setNetwork(network);
 
-    ExitWindow();
+    exitWindow();
 }
 
 void DeviceWindow::on_pushButton_clicked()

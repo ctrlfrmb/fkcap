@@ -13,23 +13,30 @@ TARGET = fkcap
 TEMPLATE = app
 
 INCLUDEPATH += $$PWD\include
+INCLUDEPATH += $$PWD\ui
 INCLUDEPATH += $$PWD\ipcap\include
 INCLUDEPATH += $$PWD\include\npcap1.13\include
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
+        ui/mainwindow.cpp \
     ipcap/src/protocol/doip.cpp \
     ipcap/src/protocol/ip.cpp \
     ipcap/src/protocol/uds.cpp \
     ipcap/src/config.cpp \
     ipcap/src/ipcap.cpp \
     ipcap/src/packet.cpp \
-    devicewindow.cpp \
-    sqlite.cpp \
-    packeinfo.cpp \
-    filterwindow.cpp
+    ui/devicewindow.cpp \
+    src/sqlite.cpp \
+    src/packeinfo.cpp \
+    ui/filterwindow.cpp \
+    ui/doipclientwindow.cpp \
+    src/doip/doipclient.cpp \
+    src/doip/diagnosticmessagehandler.cpp \
+    src/doip/doipgenericheaderhandler.cpp \
+    src/common/tcpclient.cpp \
+    src/common/udpclient.cpp
 
-HEADERS  += mainwindow.h \
+HEADERS  += ui/mainwindow.h \
     include/common/thread_pool.hpp \
     include/npcap1.13/include/pcap/bluetooth.h \
     include/npcap1.13/include/pcap/bpf.h \
@@ -58,14 +65,22 @@ HEADERS  += mainwindow.h \
     ipcap/include/ipcap.h \
     ipcap/include/packet.h \
     ipcap/include/testip.h \
-    devicewindow.h \
-    sqlite.h \
-    packeinfo.h \
-    filterwindow.h
+    ui/devicewindow.h \
+    include/sqlite.h \
+    include/packeinfo.h \
+    ui/filterwindow.h \
+    ui/doipclientwindow.h \
+    include/doip/doipclientconfig.h \
+    include/doip/doipclient.h \
+    include/doip/diagnosticmessagehandler.h \
+    include/doip/doipgenericheaderhandler.h \
+    include/common/tcpclient.h \
+    include/common/udpclient.h
 
-FORMS    += mainwindow.ui \
-    devicewindow.ui \
-    filterwindow.ui
+FORMS    += ui/mainwindow.ui \
+    ui/devicewindow.ui \
+    ui/filterwindow.ui \
+    ui/doipclientwindow.ui
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/include/npcap1.13/lib/x86_64/ -lwpcap
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/include/npcap1.13/lib/x86_64/ -lwpcap

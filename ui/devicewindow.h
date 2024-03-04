@@ -2,6 +2,7 @@
 #define DEVICEWINDOW_H
 
 #include <QDialog>
+#include <QStandardItemModel>
 
 namespace Ui {
 class DeviceWindow;
@@ -21,11 +22,12 @@ private slots:
     void on_pushButton_clicked();
 
 private:
-    void LoadDevices();
-    void ExitWindow();
+    void initWindow();
+    void exitWindow();
 
 private:
     Ui::DeviceWindow *ui;
+    QStandardItemModel *model;
 };
 
 #endif // DEVICEWINDOW_H

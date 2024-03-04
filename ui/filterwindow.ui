@@ -14,7 +14,7 @@
    <string>Capture Filter Setting</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="resource.qrc">
+   <iconset resource="../resource.qrc">
     <normaloff>:/images/resource/icons/capture_filter.png</normaloff>:/images/resource/icons/capture_filter.png</iconset>
   </property>
   <property name="modal">
@@ -45,7 +45,7 @@
   </widget>
  </widget>
  <resources>
-  <include location="resource.qrc"/>
+  <include location="../resource.qrc"/>
  </resources>
  <connections/>
 </ui>

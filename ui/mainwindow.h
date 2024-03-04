@@ -37,6 +37,10 @@ private slots:
 
     void on_actionFilter_triggered();
 
+    void on_actionFilter_Clear_triggered();
+
+    void on_actionDoIP_Client_triggered();
+
 private:
     void initTableView();
     void initTreeView();

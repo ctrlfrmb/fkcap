@@ -43,9 +43,14 @@ namespace figkey {
     }
 
     bool IPPacketParse::checkFilterProtocol(uint8_t protocl, const FilterInfo& filter) {
-        if (protocl >= filter.protocolType)
+        if (PROTOCOL_TYPE_DEFAULT == filter.protocolType)
             return true;
 
+        if (protocl == filter.protocolType)
+            return true;
+
+        if ((PROTOCOL_TYPE_DOIP == filter.protocolType) && (protocl >= filter.protocolType))
+            return true;
         return false;
     }
 

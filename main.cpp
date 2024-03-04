@@ -1,8 +1,8 @@
-#include "mainwindow.h"
-#include <QApplication>
+﻿#include "mainwindow.h"
 #include "devicewindow.h"
 #include "config.h"
 #include <QMessageBox>
+#include <QApplication>
 
 #define CONFIG_FILE_PATH "/config/figkey.ini"
 
