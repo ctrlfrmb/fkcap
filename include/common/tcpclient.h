@@ -31,12 +31,11 @@ namespace ctrlfrmb {
 
     class TCPClient {
     private:
-        SOCKET sock;
+        SOCKET sock{ INVALID_SOCKET };
         sockaddr_in serverAddr;
-        std::mutex sockMutex;
-        bool connected;
+        std::atomic<bool> connected{ false };
 
-        std::thread* recvThread;
+        std::thread* recvThread{ nullptr };
         std::atomic<bool> stopRecvThread{ false };
 
     public:
@@ -56,6 +55,8 @@ namespace ctrlfrmb {
 
     private:
         HandleTCPMessage tcpMessageCallback{ nullptr };
+
+        bool AbnormalShutdown();
 
         void ReceiveThread() ;
     };

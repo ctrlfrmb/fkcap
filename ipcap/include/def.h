@@ -27,6 +27,8 @@
 #define CONFIG_ROOT_NODE_NAME "ipcap"
 #define CONFIG_CAPTURE_PROTOCOL_NODE "CaptureProtocol"
 #define CONFIG_DISPLAY_ROWS "DisplayRows"
+#define CONFIG_DOIP_CLIENT_SEND "DoIPClientSend"
+#define CONFIG_DOIP_CLIENT_RECEIVE "DoIPClientReceive"
 #define CONFIG_TIME_UPDATE_UI "TimeUpdateUI"
 #define CONFIG_SAVE_LOG_NODE "CaptureType"
 #define CONFIG_CAPTURE_TYPE_NODE "SaveLog"
@@ -117,6 +119,8 @@ namespace figkey {
     struct CaptureConfigInfo {
         uint16_t displayRows{100};
         uint16_t timeUpdateUI{1000};        //ms
+        uint16_t doipClientSend{5};
+        uint16_t doipClientReceive{5};
         NetworkInfo network;
         FilterInfo filter;
         bool save{ true };

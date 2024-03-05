@@ -89,6 +89,11 @@ namespace figkey {
         while (len >= ETHERNET_IP_UDP_HEADER_MIN)
         {
             PacketInfo info = parseIpPacket(packet+offset, len);
+            if (0 == info.index) {
+                std::cerr << "Fatal error: " << info.data << std::endl;
+                return false;
+            }
+
             offset += static_cast<uint32_t>(info.index);
             std::vector<uint8_t> payload(packet+offset, packet+(offset+info.payloadLength));
             offset += info.payloadLength;

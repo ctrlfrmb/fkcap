@@ -58,7 +58,8 @@ namespace figkey {
         auto captureFilter = config.find(CONFIG_CAPTURE_PROTOCOL_NODE);
         if ((captureFilter != config.end()) && !captureFilter->second.empty())
         {
-            configInfo.captureFilter = captureFilter->second;
+            // TODO fixed for this tool
+            //configInfo.captureFilter = captureFilter->second;
             std::cout << "Capture protocol : " << configInfo.captureFilter << std::endl;
         }
 
@@ -70,6 +71,26 @@ namespace figkey {
                 configInfo.displayRows = 100;
             std::cout << "Protocol display rows : " << configInfo.displayRows << std::endl;
         }
+
+        auto doipClientSend = config.find(CONFIG_DOIP_CLIENT_SEND);
+        if ((doipClientSend != config.end()) && !doipClientSend->second.empty())
+        {
+            configInfo.doipClientSend = std::stoi(doipClientSend->second);
+            if (configInfo.doipClientSend < 3 || configInfo.doipClientSend > 10)
+                configInfo.doipClientSend = 5;
+            std::cout << "doip client ui send table row : " << configInfo.doipClientSend << std::endl;
+        }
+
+        auto doipClientReceive = config.find(CONFIG_DOIP_CLIENT_RECEIVE);
+        if ((doipClientReceive != config.end()) && !doipClientReceive->second.empty())
+        {
+            configInfo.doipClientReceive = std::stoi(doipClientReceive->second);
+            if (configInfo.doipClientReceive < 3 || configInfo.doipClientReceive > 100)
+                configInfo.doipClientReceive = 5;
+            std::cout << "doip client ui receive table row : " << configInfo.doipClientReceive << std::endl;
+        }
+
+
 
         auto updateUI = config.find(CONFIG_TIME_UPDATE_UI);
         if ((updateUI != config.end()) && !updateUI->second.empty())

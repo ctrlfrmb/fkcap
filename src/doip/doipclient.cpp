@@ -12,6 +12,10 @@ DoIPClient::DoIPClient()
      tc.SetMessageCallback(std::bind(&DoIPClient::receiveMessage, this, std::placeholders::_1));
 }
 
+void DoIPClient::SetMessageCallback(const opensource::ctrlfrmb::HandleTCPMessage& callback) {
+    diagnosticCallback = callback;
+}
+
 /*
  *Set up the connection between client and server
  */
@@ -76,9 +80,12 @@ void DoIPClient::reconnectServer(){
 std::vector<uint8_t> DoIPClient::buildRoutingActivationRequest() {
    std::vector<uint8_t> data(15, 0);
   
+   auto& config = figkey::DoIPClientConfig::Instance();
+   auto ver = config.getVersion();
+   auto type  = config.getActiveType();
    //Generic Header
-   data[0]=0x02;  //Protocol Version
-   data[1]=0xFD;  //Inverse Protocol Version
+   data[0]= (unsigned char)(ver & 0x000000FF);  //Protocol Version
+   data[1]= ~data[0];  //Inverse Protocol Version
    data[2]=0x00;  //Payload-Type
    data[3]=0x05;
    data[4]=0x00;  //Payload-Length
@@ -89,12 +96,21 @@ std::vector<uint8_t> DoIPClient::buildRoutingActivationRequest() {
    //Payload-Type specific message-content
    data[8] = (unsigned char)((sourceAddress >> 8) & 0xFF); //Source Address
    data[9] = (unsigned char)(sourceAddress & 0xFF);
-   data[10]=0x00; //Activation-Type
+   data[10]= (unsigned char)(type & 0x000000FF);; //Activation-Type
    data[11]=0x00; //Reserved ISO(default)
    data[12]=0x00;
    data[13]=0x00;
    data[14]=0x00;
 
+   if (config.getUseOEMSpecific()) {
+       data.resize(19);
+       auto arr  = config.getAdditionalOEMSpecific();
+       if (arr.size() != 4) {
+           std::cerr << "doip client config additional oem specific invalid, size" << arr.size() << std::endl;
+           return data;
+       }
+       data.insert(data.end(), arr.begin(), arr.end());
+   }
    return data;
 }
 
@@ -133,12 +149,15 @@ bool DoIPClient::sendAliveCheckResponse() {
  * Receive a message from server
  */
 void DoIPClient::receiveMessage(std::vector<uint8_t> data) {
-    printf("Client received: ");
-    for(size_t i = 0; i < data.size(); i++)
-    {
-        printf("0x%02X ", _receivedData[i]);
-    }    
-    printf("\n ");	
+    if (diagnosticCallback)
+        diagnosticCallback(data);
+
+//    printf("Client received: ");
+//    for(size_t i = 0; i < data.size(); i++)
+//    {
+//        printf("0x%02X ", _receivedData[i]);
+//    }
+//    printf("\n ");
     
 //    GenericHeaderAction action = parseGenericHeader(_receivedData, readedBytes);
 

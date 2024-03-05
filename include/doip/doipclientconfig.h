@@ -35,6 +35,10 @@ public:
         return obj;
     }
 
+    int getVersion() const { return settings.value("client/version").toString().toInt(nullptr, 16); }
+    void setVersion(int value) { settings.setValue("client/version",
+                                                   QString("%1").arg(value, 2 /*width*/, 16 /*base*/, QChar('0') /*fill*/)); }
+
     std::string getLocalIP() const { return settings.value("client/localIP").toString().toStdString(); }
     void setLocalIP(const QString& value) { settings.setValue("client/localIP", value); }
 
@@ -57,6 +61,10 @@ public:
     void setTargetAddress(unsigned short value) {
         settings.setValue("client/targetAddress", QString("%1").arg(value, 4 /*width*/, 16 /*base*/, QChar('0') /*fill*/));
     }
+
+    int getActiveType() const { return settings.value("client/activeType").toString().toInt(nullptr, 16); }
+    void setActiveType(int value) { settings.setValue("client/activeType",
+                                                      QString("%1").arg(value, 2 /*width*/, 16 /*base*/, QChar('0') /*fill*/)); }
 
     bool getAutoVehicleDiscovery() const { return settings.value("client/autoVehicleDiscovery").toBool(); }
     void setAutoVehicleDiscovery(bool value) { settings.setValue("client/autoVehicleDiscovery", value); }

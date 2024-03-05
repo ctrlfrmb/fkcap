@@ -15,8 +15,6 @@ namespace opensource {
 namespace ctrlfrmb {
 
 TCPClient::TCPClient() {
-	connected = false;
-	recvThread = nullptr;
 }
 
 TCPClient::~TCPClient() {
@@ -24,11 +22,14 @@ TCPClient::~TCPClient() {
 	if (recvThread && recvThread->joinable()) {
 		recvThread->join();
 		delete recvThread;
+        recvThread = nullptr;
 	}
 }
 
 bool TCPClient::Connect(const char* ipAddress, int port, const char* localIP) {
-    std::unique_lock<std::mutex> locker(sockMutex);
+    if (connected)
+        return true;
+
 	// Initialize Winsock
 	WSADATA wsaData;
 	int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -59,9 +60,7 @@ bool TCPClient::Connect(const char* ipAddress, int port, const char* localIP) {
 	result = bind(sock, (sockaddr*)&localAddr, sizeof(localAddr));
 	if (result != 0) {
 		std::cerr << "bind() failed with error code: " << WSAGetLastError() << std::endl;
-		closesocket(sock);
-		WSACleanup();
-		return false;
+        return AbnormalShutdown();
 	}
 
 	// Set the server address to connect to
@@ -73,40 +72,54 @@ bool TCPClient::Connect(const char* ipAddress, int port, const char* localIP) {
 	result = connect(sock, (sockaddr*)&serverAddr, sizeof(serverAddr));
 	if (result != 0) {
 		std::cerr << "connect() failed with error code: " << WSAGetLastError() << std::endl;
-		closesocket(sock);
-		WSACleanup();
-		return false;
+        return AbnormalShutdown();
 	}
 
 	connected = true;
+    stopRecvThread.store(false);
 
 	// Start the receive thread
-	recvThread = new std::thread(&TCPClient::ReceiveThread, this);
+    if (nullptr == recvThread)
+        recvThread = new std::thread(&TCPClient::ReceiveThread, this);
 	return true;
 }
 
+bool TCPClient::AbnormalShutdown() {
+    if (INVALID_SOCKET != sock) {
+        int result = closesocket(sock);
+        if (result == 0) {
+            WSACleanup();
+        } else {
+            // 错误处理
+            std::cerr << "closesocket failed with error: " << WSAGetLastError() << std::endl;
+        }
+        sock = INVALID_SOCKET;
+    }
+
+    return false;
+}
+
 void TCPClient::Disconnect() {
-    std::unique_lock<std::mutex> locker(sockMutex);
-	if (connected) {
-		stopRecvThread.store(true);
-		if (recvThread) {
-			recvThread->join();
-			delete recvThread;
-			recvThread = nullptr;
-		}
-		closesocket(sock);
-		WSACleanup();
-		connected = false;
-	}
+    stopRecvThread.store(true);
+
+    AbnormalShutdown();
+
+    if (recvThread) {
+        if (recvThread->joinable())
+            recvThread->join();
+        delete recvThread;
+        recvThread = nullptr;
+    }
+
+    connected = false;
 }
 
 bool TCPClient::IsConnected() {
-    std::unique_lock<std::mutex> locker(sockMutex);
     return connected;
 }
 
 bool TCPClient::Send(const std::vector<uint8_t>& data) {
-    if (!IsConnected()) {
+    if (!connected) {
 		return false;
 	}
 
@@ -124,13 +137,14 @@ void TCPClient::SetMessageCallback(const HandleTCPMessage& callback) {
 }
 
 void TCPClient::ReceiveThread() {
-	std::vector<uint8_t> buffer(DEFAULT_BUFFER_SIZE);
+    uint8_t buffer[DEFAULT_BUFFER_SIZE]{0};
 	while (!stopRecvThread) {
-		int result = recv(sock, (char*)buffer.data(), buffer.size(), 0);
+        int result = recv(sock, (char*)buffer, DEFAULT_BUFFER_SIZE, 0);
 		if (result == SOCKET_ERROR) {
 			if (WSAGetLastError() == WSAECONNRESET) {
 				// The connection was reset by the peer
 				stopRecvThread = true;
+                std::cerr << "The connection was reset by the peer " << std::endl;
 			}
 			else {
 				std::cerr << "recv() failed with error code: " << WSAGetLastError() << std::endl;
@@ -140,20 +154,15 @@ void TCPClient::ReceiveThread() {
 		else if (result == 0) {
 			// The connection was closed by the peer
 			stopRecvThread = true;
+            std::cerr << "The connection was closed by the peer " << std::endl;
 			break;
 		}
 
-        if (tcpMessageCallback)
-            tcpMessageCallback(buffer);
-
-		std::vector<uint8_t> data(buffer.begin(), buffer.begin() + result);
-		// Print received data in hexadecimal format
-		std::cout << "Received data: ";
-		for (const auto& d: data) {
-			std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)d << " ";
-		}
-		std::cout << std::endl;
-	}
+        if (tcpMessageCallback) {
+            std::vector<uint8_t> data(buffer, buffer + result);
+            tcpMessageCallback(data);
+        }
+    }
 }
 
 }// namespace ctrlfrmb

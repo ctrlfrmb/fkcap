@@ -31,6 +31,8 @@ class DoIPClient{
 public:
     DoIPClient();
 
+    void SetMessageCallback(const opensource::ctrlfrmb::HandleTCPMessage& callback);
+
     bool startTcpConnection();
     bool startUdpConnection();
     bool sendRoutingActivationRequest();
@@ -51,6 +53,7 @@ private:
     //int _sockFd, _sockFd_udp, _connected;
     unsigned short sourceAddress{0x0E01};
     unsigned short targetAddress{0xBBBB};
+    opensource::ctrlfrmb::HandleTCPMessage diagnosticCallback;
     opensource::ctrlfrmb::TCPClient tc;
     opensource::ctrlfrmb::UDPClient uc;
 
