@@ -149,15 +149,15 @@ bool DoIPClient::sendAliveCheckResponse() {
  * Receive a message from server
  */
 void DoIPClient::receiveMessage(std::vector<uint8_t> data) {
-    if (diagnosticCallback)
-        diagnosticCallback(data);
-
-//    printf("Client received: ");
+//    printf("doip client received: ");
 //    for(size_t i = 0; i < data.size(); i++)
 //    {
-//        printf("0x%02X ", _receivedData[i]);
+//        printf("%02X ", data[i]);
 //    }
 //    printf("\n ");
+
+    if (diagnosticCallback)
+        diagnosticCallback(data);
     
 //    GenericHeaderAction action = parseGenericHeader(_receivedData, readedBytes);
 

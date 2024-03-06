@@ -8,12 +8,18 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <QTimer>
+#include <QScrollBar>
+#include <QFile>
+#include <QFileInfo>
+#include <QDir>
+#include <QInputDialog>
+#include <QFileDialog>
 
 #define SQLITE_DATABASE_PATH "/db/figkey.db"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow), pim(nullptr), tvm(nullptr), m_timerUpdateUI(nullptr)
+    ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
@@ -22,10 +28,12 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    figkey::NpcapCom::Instance().stopCapture();
+    exitWindow();
 
-    if (m_timerUpdateUI)
-        delete m_timerUpdateUI;  // 在析构函数中删除定时器
+    figkey::IPPacketParse::Instance().setCallback(nullptr);
+
+    if (timerUpdateUI)
+        delete timerUpdateUI;  // 在析构函数中删除定时器
     if (pim)
         delete pim;
     if (tvm)
@@ -37,16 +45,13 @@ void MainWindow::initTableView() {
     pim = new PacketInfoModel(this);
     ui->tableView->setModel(pim);
     // 设置列宽比例 "Index" "Timestamp" "Source IP" "Destination IP" "Protocol" "Payload Length" "Information"
-//    int tableWidth = ui->tableView->geometry().width();
-//    int total = 2 + 5 + 5 + 5 + 1 + 2 + 30; // 比例和
-//    ui->tableView->setColumnWidth(0, tableWidth * 2 / total);
-//    ui->tableView->setColumnWidth(1, tableWidth * 5 / total);
-//    ui->tableView->setColumnWidth(2, tableWidth * 5 / total);
-//    ui->tableView->setColumnWidth(3, tableWidth * 5 / total);
-//    ui->tableView->setColumnWidth(4, tableWidth * 1 / total);
-//    ui->tableView->setColumnWidth(5, tableWidth * 2 / total);
-//    ui->tableView->setColumnWidth(6, tableWidth * 30 / total);
-//    ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->tableView->setColumnWidth(0, 50);
+    ui->tableView->setColumnWidth(1, 100);
+    ui->tableView->setColumnWidth(2, 110);
+    ui->tableView->setColumnWidth(3, 110);
+    ui->tableView->setColumnWidth(4, 55);
+    ui->tableView->setColumnWidth(5, 50);
+    ui->tableView->horizontalHeader()->setSectionResizeMode(6, QHeaderView::Stretch);
 }
 
 void MainWindow::initTreeView() {
@@ -76,6 +81,48 @@ void MainWindow::initTreeView() {
     ui->treeView->header()->setDefaultAlignment(Qt::AlignHCenter);
 }
 
+void renameFileIfExists(const QString &filePath)
+{
+    QFileInfo fileInfo(filePath);
+    if (fileInfo.exists() && fileInfo.isFile())
+    {
+        bool ok;
+        QString text = QInputDialog::getText(nullptr, "File exists",
+                                             "File is already exists, please enter new name:",
+                                             QLineEdit::Normal,
+                                             fileInfo.fileName(), &ok);
+        if (ok && !text.isEmpty())
+        {
+            // 执行重命名操作
+            QString newFilePath = fileInfo.dir().filePath(text);
+            if (QFile::rename(filePath, newFilePath))
+            {
+                QMessageBox::information(nullptr, "Rename success",
+                                         "File has been renamed successfully",
+                                         QMessageBox::Ok);
+                return;
+            }
+        }
+
+        if(QFile::remove(filePath))
+        {
+            QMessageBox::information(nullptr, "File deletion",
+                                     "File has been deleted successfully",
+                                     QMessageBox::Ok);
+        }
+        else
+        {
+            QMessageBox::warning(nullptr, "File deletion",
+                                 "Failed to delete the file",
+                                 QMessageBox::Ok);
+        }
+    }
+    else
+    {
+        // 文件不存在，进行其他操作...
+    }
+}
+
 void MainWindow::initWindow()
 {
     initTableView();
@@ -83,7 +130,10 @@ void MainWindow::initWindow()
 
     using namespace figkey;
 
-    db.loadFile(SQLITE_DATABASE_PATH);
+    QString path = QCoreApplication::applicationDirPath();
+    path+=SQLITE_DATABASE_PATH;
+    renameFileIfExists(path);
+    db.openFile(path);
 
     const auto& cfg = CaptureConfig::Instance().getConfigInfo();
 
@@ -92,20 +142,34 @@ void MainWindow::initWindow()
     // 使用std::bind设置回调函数
     IPPacketParse::Instance().setCallback(std::bind(&MainWindow::processPacket, this, std::placeholders::_1));
 
-    m_timerUpdateUI = new QTimer(this);
-    connect(m_timerUpdateUI, &QTimer::timeout, this, &MainWindow::updateUI);
-    m_timerUpdateUI->start(cfg.timeUpdateUI); // 设置时间间隔为 1000 毫秒
+    timerUpdateUI = new QTimer(this);
+    connect(timerUpdateUI, &QTimer::timeout, this, &MainWindow::updateUI);
+    timerUpdateUI->start(cfg.timeUpdateUI); // 设置时间间隔为 1000 毫秒
+    connect(ui->tableView->verticalScrollBar(), &QScrollBar::valueChanged,
+             this, [&](int value) {
+               QScrollBar *scrollBar = ui->tableView->verticalScrollBar();
+               scrollBarAtBottom = value == scrollBar->maximum();
+               userHasScrolled = true;
+             });
+    connect(ui->tableView->verticalScrollBar(), &QScrollBar::sliderReleased, this, [&]() {
+       if (scrollBarAtBottom)
+           userHasScrolled = false;
+     });
 
     ui->actionStart->setEnabled(false);
+}
+
+void MainWindow::exitWindow() {
+    figkey::NpcapCom::Instance().stopCapture();
+    if(timerUpdateUI)
+        timerUpdateUI->stop();
+    db.closeFile();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
     int ret = QMessageBox::question(this, tr("Tips"), tr("Are you sure to close the program?"), QMessageBox::Yes | QMessageBox::No);
     if (ret == QMessageBox::Yes) {
-        // 当你确认需要关闭窗口时，调用此句：
-        figkey::IPPacketParse::Instance().setCallback(nullptr);
-        figkey::NpcapCom::Instance().stopCapture();
-        m_timerUpdateUI->stop();
+        exitWindow();
         event->accept();
     } else {
         // 当你确认不需要关闭窗口时，调用此句：
@@ -114,7 +178,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 }
 
 void MainWindow::updateTreeView() {
-    const auto& info = pim->getFirstPacket(); //获取首行数据
+    const auto& info = pim->getLastPacket(); //获取首行数据
 
     QStringList valueList;
     valueList << QString::fromStdString(info.timestamp)
@@ -143,22 +207,30 @@ void MainWindow::updateTreeView() {
 
 void MainWindow::updateUI() {
     if (figkey::NpcapCom::Instance().getIsRunning()) {
-        ui->tableView->update();  // 或者你需要的其他刷新表格的操作
+        ui->tableView->update();
         updateTreeView(); //更新Treeview
+
+        if (!userHasScrolled || scrollBarAtBottom)
+            ui->tableView->scrollToBottom();
     }
 }
 
 void MainWindow::processPacket(figkey::PacketInfo packetInfo)
 {
-    static QAtomicInt count{0};
-    qDebug() <<"capture "<<++count;
-    pim->addPacket(std::move(packetInfo));
+    //static QAtomicInt count{0};
+    //qDebug() <<"capture "<<++count;
+    QMutexLocker locker(&mutexPacket);
+    packetInfo.index = ++packetCounter;
+
+    pim->addPacket(packetInfo);
+    db.storePacket(packetInfo);
 }
 
 void MainWindow::on_actionStop_triggered()
 {
     qDebug() <<"stop capture";
     figkey::NpcapCom::Instance().stopCapture();
+    db.closeFile();
 
     ui->actionStart->setEnabled(true);
     ui->actionPause->setEnabled(false);
@@ -229,4 +301,26 @@ void MainWindow::on_actionDoIP_Client_triggered()
     dc.adjustSize();
     dc.setFixedSize(dc.size());
     dc.exec();
+}
+
+void MainWindow::on_actionOpen_triggered()
+{
+    auto& pcap = figkey::NpcapCom::Instance();
+    if(pcap.getIsRunning()) {
+        QMessageBox::warning(this, "warnning", "Data is currently being captured, please stop capturing first and remember to save the data.");
+        return;
+    }
+
+
+    QString fileName = QFileDialog::getOpenFileName(
+    nullptr,             // 父窗口，如果没有则为nullptr
+    "Open Capture File",         // 对话框标题
+    QCoreApplication::applicationDirPath(),             // 默认打开路径
+    "Sqlite DataBase (*.db);;Text files (*.txt)");    // 文件过滤器
+    //db.openFile()
+}
+
+void MainWindow::on_actionSave_triggered()
+{
+
 }

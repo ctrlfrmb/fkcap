@@ -11,7 +11,7 @@ PacketInfoModel::PacketInfoModel(QObject *parent)
 int PacketInfoModel::rowCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent);
-   // QMutexLocker locker(&m_mutex);  // 使用 QMutexLocker，它会在析构函数中自动解锁
+    //QMutexLocker locker(&m_mutex);  // 使用 QMutexLocker，它会在析构函数中自动解锁
     return m_data.size();
 }
 
@@ -46,6 +46,11 @@ QVariant PacketInfoModel::data(const QModelIndex &index, int role) const
     if (role != Qt::DisplayRole || !index.isValid())
         return QVariant();
 
+    if (index.row() >= m_data.size()) {
+         qDebug()<<"row: "<<index.row()<<" PacketInfoModel out_of_range data size: "<<m_data.size();
+         return QVariant();
+    }
+
     const auto& packet = m_data.at(index.row());
     switch (index.column()) {
         case 0: return QVariant::fromValue<uint64_t>(packet.index);
@@ -70,7 +75,7 @@ QVariant PacketInfoModel::headerData(int section, Qt::Orientation orientation, i
         case 2: return tr("Source IP");
         case 3: return tr("Destination IP");
         case 4: return tr("Protocol");
-        case 5: return tr("Payload Length");
+        case 5: return tr("Length");
         case 6: return tr("Information");
         default: return QVariant();
         }
@@ -78,23 +83,20 @@ QVariant PacketInfoModel::headerData(int section, Qt::Orientation orientation, i
     return QVariant();
 }
 
-void PacketInfoModel::addPacket(figkey::PacketInfo &&packet)
+void PacketInfoModel::addPacket(const figkey::PacketInfo &packet)
 {
-    m_mutex.lock();  // 开始访问共享资源前进行加锁
+    QMutexLocker locker(&m_mutex);
 
-    packet.index = ++packetCounter;
-    beginInsertRows(QModelIndex(), rowCount(), rowCount());
-    m_data.append(packet);
-    endInsertRows();
-
-    if (m_data.size() > m_rows)
+    if (m_data.size() >= m_rows)
     {
         beginRemoveRows(QModelIndex(), 0, 0);
         m_data.removeFirst();
         endRemoveRows();
     }
 
-    m_mutex.unlock();  // 对共享资源的访问完成后解锁
+    beginInsertRows(QModelIndex(), m_data.size(), m_data.size());
+    m_data.append(packet);
+    endInsertRows();
 }
 
 figkey::PacketInfo PacketInfoModel::getFirstPacket()
@@ -104,4 +106,13 @@ figkey::PacketInfo PacketInfoModel::getFirstPacket()
         return figkey::PacketInfo(); // 或者返回一个默认的PacketInfo
 
     return m_data.first();
+}
+
+figkey::PacketInfo PacketInfoModel::getLastPacket()
+{
+    QMutexLocker locker(&m_mutex); // 加锁
+    if (m_data.isEmpty())
+        return figkey::PacketInfo(); // 或者返回一个默认的PacketInfo
+
+    return m_data.last();
 }

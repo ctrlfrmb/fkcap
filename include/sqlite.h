@@ -10,13 +10,15 @@ class SqliteCom : public QObject
     Q_OBJECT
 
 public:
-    explicit SqliteCom(QObject *parent = nullptr, int time = 1000);
+    explicit SqliteCom(QObject *parent = nullptr);
     ~SqliteCom();
 
-    bool loadFile(const QString& path);
+    bool openFile(const QString& path);
 
     // 存储抓包数据到数据库
-    void storePacket(const figkey::PacketInfo &packet);
+    bool storePacket(const figkey::PacketInfo &packet);
+
+    void closeFile();
 
 signals:
     void transactionCommitted(const QList<figkey::PacketInfo>& packetList);
@@ -25,13 +27,11 @@ protected:
     void timerEvent(QTimerEvent *event);
 
 private:
-    void closeDataBase();
 
     // 创建数据库表格
     bool createTableIfNotExists();
 
-    bool isOpen;
-    int submitTime;
+    int timerId{ 0 };  // 添加一个成员变量来保存定时器ID
     QSqlDatabase db;
 };
 

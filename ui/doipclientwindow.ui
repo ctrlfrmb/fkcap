@@ -330,9 +330,9 @@ vehicle’s networks).</string>
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>155</y>
+     <y>150</y>
      <width>601</width>
-     <height>191</height>
+     <height>201</height>
     </rect>
    </property>
    <property name="title">
@@ -353,9 +353,9 @@ vehicle’s networks).</string>
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>356</y>
+     <y>350</y>
      <width>601</width>
-     <height>191</height>
+     <height>201</height>
     </rect>
    </property>
    <property name="title">

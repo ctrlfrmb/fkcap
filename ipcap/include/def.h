@@ -30,13 +30,8 @@
 #define CONFIG_DOIP_CLIENT_SEND "DoIPClientSend"
 #define CONFIG_DOIP_CLIENT_RECEIVE "DoIPClientReceive"
 #define CONFIG_TIME_UPDATE_UI "TimeUpdateUI"
-#define CONFIG_SAVE_LOG_NODE "CaptureType"
-#define CONFIG_CAPTURE_TYPE_NODE "SaveLog"
-#define CONFIG_RUN_ASYNC_NODE "RunAsync"
+#define CONFIG_TIME_SQL_TRANSACTION "TimeSqlTransaction"
 #define CONFIG_FILTER_PROTOCOL_NODE "FilterProtocol"
-#define CONFIG_FILTER_MAC_NODE "FilterMac"
-#define CONFIG_FILTER_IP_NODE "FilterIp"
-#define CONFIG_FILTER_PORT_NODE "FilterPort"
 #define PACKET_LOGGER_ERROR "error"
 #define PACKET_LOGGER_WARN "warn"
 
@@ -119,12 +114,11 @@ namespace figkey {
     struct CaptureConfigInfo {
         uint16_t displayRows{100};
         uint16_t timeUpdateUI{1000};        //ms
+        uint16_t timeSqlTransaction{100};
         uint16_t doipClientSend{5};
-        uint16_t doipClientReceive{5};
+        uint16_t doipClientReceive{20};
         NetworkInfo network;
         FilterInfo filter;
-        bool save{ true };
-        bool async{ false };
         std::string captureFilter{ "udp or tcp" };
     };
 

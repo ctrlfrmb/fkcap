@@ -67,9 +67,9 @@ namespace figkey {
         if ((rows != config.end()) && !rows->second.empty())
         {
             configInfo.displayRows = std::stoi(rows->second);
-            if (configInfo.displayRows < 20 || configInfo.displayRows > 10000)
+            if (configInfo.displayRows < 20 || configInfo.displayRows > 100000)
                 configInfo.displayRows = 100;
-            std::cout << "Protocol display rows : " << configInfo.displayRows << std::endl;
+            std::cout << "Capture display rows : " << configInfo.displayRows << std::endl;
         }
 
         auto doipClientSend = config.find(CONFIG_DOIP_CLIENT_SEND);
@@ -90,8 +90,6 @@ namespace figkey {
             std::cout << "doip client ui receive table row : " << configInfo.doipClientReceive << std::endl;
         }
 
-
-
         auto updateUI = config.find(CONFIG_TIME_UPDATE_UI);
         if ((updateUI != config.end()) && !updateUI->second.empty())
         {
@@ -101,24 +99,13 @@ namespace figkey {
             std::cout << "Protocol time update UI : " << configInfo.timeUpdateUI << std::endl;
         }
 
-        auto type = config.find(CONFIG_CAPTURE_TYPE_NODE);
-        if ((type != config.end()) && !type->second.empty())
+        auto sqlTransaction = config.find(CONFIG_TIME_SQL_TRANSACTION);
+        if ((sqlTransaction != config.end()) && !sqlTransaction->second.empty())
         {
-            std::cout << "Protocol filtering configuration information : " << type->second << std::endl;
-        }
-
-        auto save = config.find(CONFIG_CAPTURE_TYPE_NODE);
-        if ((save != config.end()) && !save->second.empty())
-        {
-            configInfo.save = (save->second == "false")? false :true;
-            std::cout << "Specifies whether to save packet configuration information : " << (configInfo.save?"true":"false") << std::endl;
-        }
-
-        auto async = config.find(CONFIG_RUN_ASYNC_NODE);
-        if ((async != config.end()) && !async->second.empty())
-        {
-            configInfo.async = (async->second == "true") ? true : false;
-            std::cout << "Whether to run configuration information asynchronously : " << (configInfo.async ? "true" : "false") << std::endl;
+            configInfo.timeSqlTransaction = std::stoi(sqlTransaction->second);
+            if (configInfo.timeSqlTransaction < 5 || configInfo.timeSqlTransaction > 30000)
+                configInfo.timeSqlTransaction = 100;
+            std::cout << "store packet information time : " << configInfo.timeSqlTransaction << std::endl;
         }
 
         auto filterProtocol = config.find(CONFIG_FILTER_PROTOCOL_NODE);
@@ -129,32 +116,6 @@ namespace figkey {
                 configInfo.filter.protocolType = PROTOCOL_TYPE_DEFAULT;
             std::cout << "Protocol filtering configuration information : " << static_cast<int>(configInfo.filter.protocolType) << std::endl;
         }
-
-        auto mac = config.find(CONFIG_FILTER_MAC_NODE);
-        if ((mac != config.end()) && !mac->second.empty())
-        {
-            filterMac = mac->second;
-            std::cout << "MAC filtering configuration information : " << filterMac << std::endl;
-        }
-
-        auto ip = config.find(CONFIG_FILTER_IP_NODE);
-        if ((ip != config.end()) && !ip->second.empty())
-        {
-            filterIp = ip->second;
-            std::cout << "IP filtering configuration information : " << filterIp << std::endl;
-        }
-
-        auto port = config.find(CONFIG_FILTER_PORT_NODE);
-        if ((port != config.end()) && !port->second.empty())
-        {
-            filterPort = port->second;
-            std::cout << "Port number filtering configuration information : " << filterPort << std::endl;
-        }
-
-        if (!filterMac.empty() || !filterIp.empty() || !filterPort.empty())
-            enableFilter = true;
-        else
-            enableFilter = false;
 
         return true;
     }
@@ -171,28 +132,4 @@ namespace figkey {
         configInfo.filter = filter;
     }
 
-    // 检查地址过滤
-    bool CaptureConfig::checkFilterAddress(const std::string& address)
-    {
-        if (!enableFilter)
-            return false;
-
-        if (!filterMac.empty() && (std::string::npos == address.find(filterMac))) {
-            std::cout << "filter by mac: " << filterMac << std::endl;
-            return true;
-        }
-
-        if (!filterIp.empty() && (std::string::npos == address.find(filterIp))) {
-            std::cout << "filter by ip: " << filterIp << std::endl;
-            return true;
-        }
-
-        if (!filterPort.empty() && ((std::string::npos == address.find(filterPort+"->")) ||
-            (std::string::npos == address.find("->"+filterPort)))) {
-            std::cout << "filter by port: " << filterPort << std::endl;
-            return true;
-        }
-
-        return false;
-    }
 }

@@ -5,6 +5,7 @@
 #include <QDateTime>
 #include <QDebug>
 #include <QMessageBox>
+#include <QHBoxLayout>
 
 DoIPClientWindow::DoIPClientWindow(QWidget *parent) :
     QDialog(parent),
@@ -99,15 +100,15 @@ void DoIPClientWindow::initTableSend() {
     headers << "Time" << "UDS" << "Repeat" << "Interval" << "Send";
     ui->tableSend->setHorizontalHeaderLabels(headers);
 
-    ui->tableSend->setColumnWidth(0, 120); // Time 列
-    ui->tableSend->setColumnWidth(1, 200); // UDS 列
-    ui->tableSend->setColumnWidth(2, 30);  // Repeat 列
+    ui->tableSend->setColumnWidth(0, 100); // Time 列
+    ui->tableSend->setColumnWidth(1, 240); // UDS 列
+    ui->tableSend->setColumnWidth(2, 60);  // Repeat 列
     ui->tableSend->setColumnWidth(3, 80);  // Interval 列
-    ui->tableSend->setColumnWidth(4, 120); // Send 列
+    ui->tableSend->setColumnWidth(4, 100); // Send 列
 
-    for(int i=0; i<10; i++) {
+    for(int i=0; i< config.doipClientSend; i++) {
         // 初始时间列设置为当前时间
-        QTableWidgetItem *timeItem = new QTableWidgetItem(QTime::currentTime().toString("hh:mm:ss.zzz"));
+        QTableWidgetItem *timeItem = new QTableWidgetItem(""); //QTime::currentTime().toString("hh:mm:ss.zzz")
         ui->tableSend->setItem(i, 0, timeItem);
         // UDS 列只接受16进制数字输入，使用正则表达式进行校验
         QRegExp rx("[0-9A-Fa-f ]{1,}");
@@ -129,7 +130,19 @@ void DoIPClientWindow::initTableSend() {
             }
         });
 
-        ui->tableSend->setCellWidget(i, 2, checkBox);
+        // 创建一个QWidget作为容器
+        QWidget *checkBoxWidget = new QWidget(this);
+        checkBoxWidget->setStyleSheet("background-color:transparent;"); // 设定为透明背景
+
+        // 创建布局进行居中布局
+        QHBoxLayout *layout = new QHBoxLayout(checkBoxWidget);
+        layout->addWidget(checkBox);
+        layout->setAlignment(Qt::AlignCenter);
+        layout->setContentsMargins(0,0,0,0); // 设置布局内边距为0
+
+        // 把QWidget容器设置为CellWidget
+        ui->tableSend->setCellWidget(i, 2, checkBoxWidget);
+
         intervalSpin->setRange(1, 60*60*1000);
         intervalSpin->setEnabled(false);
         intervalSpin->setValue(1000);
@@ -147,8 +160,6 @@ void DoIPClientWindow::initTableSend() {
 
 void DoIPClientWindow::initTableReceive() {
     // Set the number of rows and columns
-    auto& config = figkey::CaptureConfig::Instance().getConfigInfo();
-    ui->tableReceive->setRowCount(config.doipClientReceive);
     ui->tableReceive->setColumnCount(2);
 
     // Set horizontal header labels
@@ -157,7 +168,7 @@ void DoIPClientWindow::initTableReceive() {
     ui->tableReceive->setHorizontalHeaderLabels(headers);
 
     // Set column width
-    ui->tableReceive->setColumnWidth(0, 180);
+    ui->tableReceive->setColumnWidth(0, 100);
     ui->tableReceive->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
 }
 
@@ -260,30 +271,23 @@ void DoIPClientWindow::slotSendData(int row, QLineEdit *lineEdit, QCheckBox *che
 void DoIPClientWindow::timerEvent(QTimerEvent *event) {
     int timerID = event->timerId(); // 获取定时器ID
     int row = timerIDs.key(timerID); // 从map中查找行号
-    QPushButton *sendButton = qobject_cast<QPushButton *>(ui->tableSend->cellWidget(row, 4));
+
     QLineEdit *lineEdit = qobject_cast<QLineEdit *>(ui->tableSend->cellWidget(row, 1));
-    QCheckBox *checkBox = qobject_cast<QCheckBox *>(ui->tableSend->cellWidget(row, 2));
+    // 在 timerEvent 函数中，首先获取 checkBox 的包裹器（container）
+    QWidget *checkBoxContainer = qobject_cast<QWidget *>(ui->tableSend->cellWidget(row, 2));
+    // 然后从布局中获取 checkBox
+    QCheckBox *checkBox = nullptr;
+    if (checkBoxContainer) {
+        checkBox = qobject_cast<QCheckBox *>(checkBoxContainer->layout()->itemAt(0)->widget());
+    }
     QSpinBox *intervalSpin = qobject_cast<QSpinBox *>(ui->tableSend->cellWidget(row, 3));
-    if(sendButton && lineEdit && checkBox && intervalSpin) {
+    QPushButton *sendButton = qobject_cast<QPushButton *>(ui->tableSend->cellWidget(row, 4));
+    if(lineEdit && checkBox && intervalSpin && sendButton) {
         slotSendData(row, lineEdit, checkBox, intervalSpin); // 再次调用发送数据函数
     }
 }
 
 void DoIPClientWindow::receiveMessage(std::vector<uint8_t> data) {
-    // Debug outputs
-    //qDebug() << "receiveMessage is called.";
-    //qDebug() << "Data size:" << data.size();
-
-    // Remove the first row
-    ui->tableReceive->removeRow(0);
-
-    // Add a new row at the end
-    int newRow = ui->tableReceive->rowCount();
-    ui->tableReceive->insertRow(newRow);
-
-    // Add the timestamp to the table
-    ui->tableReceive->setItem(newRow, 0, new QTableWidgetItem(QTime::currentTime().toString("hh:mm:ss.zzz")));
-
     // Format the data as a hexadecimal string
     QString dataString;
     for (uint8_t byte : data) {
@@ -291,7 +295,20 @@ void DoIPClientWindow::receiveMessage(std::vector<uint8_t> data) {
         dataString.append(QString("%1 ").arg(byte, 2, 16, QChar('0')).toUpper());
     }
 
-    // Add the data to the table
+    QString timeStamp = QTime::currentTime().toString("hh:mm:ss.zzz");
+
+    //qDebug() << timeStamp << dataString;
+
+    // Remove the first row
+    if (ui->tableReceive->rowCount() >= figkey::CaptureConfig::Instance().getConfigInfo().doipClientReceive)
+        ui->tableReceive->removeRow(0);
+
+    // Add a new row at the end
+    int newRow = ui->tableReceive->rowCount();
+    ui->tableReceive->insertRow(newRow);
+
+    // Add the timestamp and message to the table
+    ui->tableReceive->setItem(newRow, 0, new QTableWidgetItem(timeStamp));
     ui->tableReceive->setItem(newRow, 1, new QTableWidgetItem(dataString));
-    //ui->tableReceive->viewport()->update();
 }
+

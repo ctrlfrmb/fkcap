@@ -9,6 +9,7 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    QApplication::setDesktopSettingsAware(false);
 
     QStringList arguments = QCoreApplication::arguments();
     QString path = QCoreApplication::applicationDirPath();

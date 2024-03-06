@@ -10,5 +10,7 @@
         <file>resource/icons/capture_nofilter.png</file>
         <file>resource/icons/doip_client.png</file>
         <file>resource/icons/doip_server.png</file>
+        <file>resource/icons/db_open.png</file>
+        <file>resource/icons/db_save.png</file>
     </qresource>
 </RCC>

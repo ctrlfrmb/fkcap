@@ -9,6 +9,8 @@
 #include <QSpinBox>
 #include <atomic>
 #include <QMutex>
+#include <QTimer>
+#include <QQueue>
 
 namespace Ui {
 class DoIPClientWindow;
@@ -47,7 +49,6 @@ private:
     figkey::DoIPClient doip;
     QMutex mutexTimers;
     QMap<int, int> timerIDs;
-
 };
 
 #endif // DOIPCLIENTWINDOW_H

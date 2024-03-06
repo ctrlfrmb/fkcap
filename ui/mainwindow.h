@@ -41,10 +41,15 @@ private slots:
 
     void on_actionDoIP_Client_triggered();
 
+    void on_actionOpen_triggered();
+
+    void on_actionSave_triggered();
+
 private:
     void initTableView();
     void initTreeView();
     void initWindow();
+    void exitWindow();
     void updateTreeView();
     void pauseCapture();
     void reumeCapture();
@@ -52,10 +57,14 @@ private:
 private:
     Ui::MainWindow *ui;
 
+    QMutex mutexPacket;
+    uint64_t packetCounter{ 0 };
     SqliteCom db;
-    PacketInfoModel *pim;
-    QStandardItemModel *tvm;
-    QTimer *m_timerUpdateUI;  // 将定时器定义为类的成员变量
+    PacketInfoModel *pim{ nullptr};
+    QStandardItemModel *tvm{ nullptr};
+    QTimer *timerUpdateUI{ nullptr};  // 将定时器定义为类的成员变量
+    bool scrollBarAtBottom{ true };
+    bool userHasScrolled{ false };
 };
 
 #endif // MAINWINDOW_H

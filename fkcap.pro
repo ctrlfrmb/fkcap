@@ -91,3 +91,7 @@ DEPENDPATH += $$PWD/include/npcap1.13/lib/x86_64
 
 RESOURCES += \
     resource.qrc
+
+# 使用你的图标文件替换“icon.ico”，如果你的目录结构不同，适当地改变路径。
+RC_ICONS = resource/icons/main_window.ico
+
