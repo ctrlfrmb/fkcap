@@ -16,7 +16,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(bool isStart = true, QWidget *parent = 0);
     ~MainWindow();
 
     void processPacket(figkey::PacketInfo packetInfo);
@@ -45,12 +45,16 @@ private slots:
 
     void on_actionSave_triggered();
 
+    void on_tableView_clicked(const QModelIndex &index);
+
+    void on_actionNetwork_Assist_triggered();
+
 private:
     void initTableView();
     void initTreeView();
-    void initWindow();
+    void initWindow(bool isStart);
     void exitWindow();
-    void updateTreeView();
+    void updateTreeView(const figkey::PacketInfo& packet);
     void pauseCapture();
     void reumeCapture();
 

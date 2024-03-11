@@ -13,7 +13,6 @@
 #define OPEN_SOURCE_UDP_CLIENT_H
 
 #include <WinSock2.h>
-#include <WS2tcpip.h>
 #include <iostream>
 #include <vector>
 #include <string>

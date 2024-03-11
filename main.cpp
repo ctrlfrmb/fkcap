@@ -8,8 +8,18 @@
 
 int main(int argc, char *argv[])
 {
+    QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    //qputenv("QT_AUTO_SCREEN_SCALE_FACTOR", "1");
+
+    qRegisterMetaType< QList<QPersistentModelIndex> >("QList<QPersistentModelIndex>");
+
+    qRegisterMetaType< QVector<int> >("QVector<int>");
+
+    qRegisterMetaType<Qt::Orientation>("Qt::Orientation");
+
+    qRegisterMetaType<QAbstractItemModel::LayoutChangeHint>("QAbstractItemModel::LayoutChangeHint");
+
     QApplication a(argc, argv);
-    QApplication::setDesktopSettingsAware(false);
 
     QStringList arguments = QCoreApplication::arguments();
     QString path = QCoreApplication::applicationDirPath();
@@ -22,6 +32,7 @@ int main(int argc, char *argv[])
 
     figkey::CaptureConfig::Instance().loadConfigFile(path.toStdString());
 
+    bool isStart{ true };
     {
         DeviceWindow d;
         d.adjustSize();
@@ -30,9 +41,11 @@ int main(int argc, char *argv[])
         if (result == QDialog::Rejected) {
             return -1;
         }
+
+        isStart = d.getChecked();
     }
 
-    MainWindow m;
+    MainWindow m(isStart);
     m.show();
 
     return a.exec();

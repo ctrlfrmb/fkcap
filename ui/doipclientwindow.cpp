@@ -173,7 +173,6 @@ void DoIPClientWindow::initTableReceive() {
 }
 
 void DoIPClientWindow::initWindow() {
-    qRegisterMetaType< QVector<int> >("QVector<int>");
     doip.SetMessageCallback(std::bind(&DoIPClientWindow::receiveMessage, this, std::placeholders::_1));
 
     initSetting();

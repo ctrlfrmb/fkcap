@@ -6,7 +6,13 @@
  * @date    2024.01.18
  * Copyright (c) opensource::ctrlfrmb 2024-2034
  */
-
+#ifdef _WIN32
+#ifdef _WIN32_WINNT
+#undef _WIN32_WINNT
+#endif
+#define _WIN32_WINNT 0x6000
+#include <ws2tcpip.h>
+#endif
 #include "common/udpclient.h"
 
 namespace opensource {

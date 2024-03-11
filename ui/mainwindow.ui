@@ -48,13 +48,14 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuDdd">
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionOpen"/>
     <addaction name="actionSave"/>
    </widget>
    <widget class="QMenu" name="menuView">
@@ -87,6 +88,7 @@
     <property name="title">
      <string>Test</string>
     </property>
+    <addaction name="actionNetwork_Assist"/>
     <addaction name="actionDoIP_Client"/>
     <addaction name="actionDoIP_Server"/>
    </widget>
@@ -100,6 +102,9 @@
   <widget class="QToolBar" name="toolBar">
    <property name="windowTitle">
     <string>toolBar</string>
+   </property>
+   <property name="toolTip">
+    <string>TCP assistants, including servers or clients</string>
    </property>
    <property name="iconSize">
     <size>
@@ -122,6 +127,8 @@
    <addaction name="separator"/>
    <addaction name="actionFilter"/>
    <addaction name="actionFilter_Clear"/>
+   <addaction name="separator"/>
+   <addaction name="actionNetwork_Assist"/>
    <addaction name="actionDoIP_Client"/>
    <addaction name="actionDoIP_Server"/>
    <addaction name="separator"/>
@@ -145,6 +152,9 @@
    </property>
   </action>
   <action name="actionPause">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="../resource.qrc">
      <normaloff>:/images/resource/icons/capture_pause.png</normaloff>:/images/resource/icons/capture_pause.png</iconset>
@@ -157,6 +167,9 @@
    </property>
   </action>
   <action name="actionStop">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="../resource.qrc">
      <normaloff>:/images/resource/icons/capture_start.png</normaloff>:/images/resource/icons/capture_start.png</iconset>
@@ -211,6 +224,9 @@
    </property>
   </action>
   <action name="actionSave">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset resource="../resource.qrc">
      <normaloff>:/images/resource/icons/db_save.png</normaloff>:/images/resource/icons/db_save.png</iconset>
@@ -232,6 +248,15 @@
    </property>
    <property name="toolTip">
     <string>Open from file</string>
+   </property>
+  </action>
+  <action name="actionNetwork_Assist">
+   <property name="icon">
+    <iconset resource="../resource.qrc">
+     <normaloff>:/images/resource/icons/network_assist.png</normaloff>:/images/resource/icons/network_assist.png</iconset>
+   </property>
+   <property name="text">
+    <string>Network Assistants</string>
    </property>
   </action>
  </widget>

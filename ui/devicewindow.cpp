@@ -1,11 +1,12 @@
-﻿#include "devicewindow.h"
-#include "ui_devicewindow.h"
-#include "ipcap.h"
-#include "config.h"
-#include <QStandardItemModel>
+﻿#include <QStandardItemModel>
 #include <sstream>
 #include <QDebug>
 #include <QMessageBox>
+
+#include "devicewindow.h"
+#include "ui_devicewindow.h"
+#include "ipcap.h"
+#include "config.h"
 
 Q_DECLARE_METATYPE(figkey::NetworkInfo)
 
@@ -64,8 +65,13 @@ void DeviceWindow::initWindow()
     this->ui->treeView->setModel(model);
 }
 
+bool DeviceWindow::getChecked() const {
+    return isChecked;
+}
+
 void DeviceWindow::exitWindow()
 {
+    isChecked = ui->checkBox->isChecked();
     // 选中项目，关闭窗口
     this->accept();
 }
@@ -94,7 +100,7 @@ void DeviceWindow::on_pushButton_clicked()
         QMessageBox::warning(this, "Warning", "No item was selected.");
     }
     else if (this->ui->treeView->currentIndex().isValid()) {
-        QModelIndex &index = this->ui->treeView->currentIndex();
+        const QModelIndex &index = this->ui->treeView->currentIndex();
         on_treeView_doubleClicked(index);
     }
 }

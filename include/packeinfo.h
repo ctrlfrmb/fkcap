@@ -4,6 +4,7 @@
 
 #include <QAbstractTableModel>
 #include <QVector>
+#include <QMutex>
 #include "def.h"
 
 class PacketInfoModel : public QAbstractTableModel
@@ -12,15 +13,17 @@ class PacketInfoModel : public QAbstractTableModel
 
 public:
     explicit PacketInfoModel(QObject *parent = nullptr);
+    ~PacketInfoModel();
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
+    void loadPackect(const std::vector<figkey::PacketInfo>& packets);
     void addPacket(const figkey::PacketInfo& packet);
-    figkey::PacketInfo getFirstPacket();
-    figkey::PacketInfo getLastPacket();
+    void clearPacket();
+    figkey::PacketInfo getPacketByIndex(int index);
 
 private:
     QString getProtocolName(uint8_t protocolType) const;

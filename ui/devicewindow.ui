@@ -33,8 +33,8 @@
   <widget class="QPushButton" name="pushButton">
    <property name="geometry">
     <rect>
-     <x>430</x>
-     <y>330</y>
+     <x>420</x>
+     <y>331</y>
      <width>80</width>
      <height>20</height>
     </rect>
@@ -55,6 +55,25 @@
    <property name="text">
     <string>1. Double-click the network card to start capturing
 2. Select the network card and click the Start Capture button</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="checkBox">
+   <property name="geometry">
+    <rect>
+     <x>300</x>
+     <y>332</y>
+     <width>121</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>Whether to automatically start capturing network data</string>
+   </property>
+   <property name="text">
+    <string>start capture</string>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
    </property>
   </widget>
  </widget>

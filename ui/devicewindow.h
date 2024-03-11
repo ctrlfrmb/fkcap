@@ -16,6 +16,8 @@ public:
     explicit DeviceWindow(QWidget *parent = 0);
     ~DeviceWindow();
 
+    bool getChecked() const;
+
 private slots:
     void on_treeView_doubleClicked(const QModelIndex &index);
 
@@ -28,6 +30,7 @@ private:
 private:
     Ui::DeviceWindow *ui;
     QStandardItemModel *model;
+    bool isChecked{ true };
 };
 
 #endif // DEVICEWINDOW_H

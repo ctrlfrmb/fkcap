@@ -1,12 +1,18 @@
 ﻿// ipcap.cpp: 定义应用程序的入口点。
 //
+#include <iostream>
+#ifdef _WIN32
+#ifdef _WIN32_WINNT
+#undef _WIN32_WINNT
+#endif
+#define _WIN32_WINNT 0x6000
+#include <ws2tcpip.h>
+#endif
+
 #include "ipcap.h"
 #include "common/thread_pool.hpp"
 #include "protocol/ip.h"
 #include "config.h"
-#include <ws2tcpip.h>
-#include <iostream>
-#pragma comment(lib, "ws2_32.lib")
 
 namespace figkey {
 
@@ -15,9 +21,7 @@ namespace figkey {
     }
 
     NpcapCom::~NpcapCom() {
-        stopCapture();
-
-        opensource::ctrlfrmb::ThreadPool::Instance().shutdown();
+        exit();
     }
 
     void NpcapCom::init()
@@ -32,6 +36,12 @@ namespace figkey {
         opensource::ctrlfrmb::ThreadPool& pool = opensource::ctrlfrmb::ThreadPool::Instance();
         // 设置线程池参数
         pool.set(8, 2, 600); // 设置最大线程数为8，最小线程数为2，线程超时时间为600秒
+    }
+
+    void NpcapCom::exit() {
+        stopCapture();
+
+        opensource::ctrlfrmb::ThreadPool::Instance().shutdown();
     }
 
     void NpcapCom::pcapHandler(u_char* user, const struct pcap_pkthdr* pkthdr, const u_char* packet) {
@@ -205,13 +215,6 @@ namespace figkey {
     }
 
     void NpcapCom::startCapture() {
-        if (!pcapOpen())
-            return;
-
-        if (!pcapFilter())
-            return;
-
-        isRunning = true;
 #if 0
         static std::function<bool(const struct pcap_pkthdr*, const u_char*)> ipParse = std::bind(&IPPacketParse::parse, &IPPacketParse::Instance(),
             std::placeholders::_1, std::placeholders::_2);
@@ -249,14 +252,27 @@ namespace figkey {
 #endif
     }
 
-    void NpcapCom::asyncStartCapture()
+    bool NpcapCom::run()
     {
+        isRunning = false;
+
+        if (!pcapOpen())
+            return isRunning;
+
+        if (!pcapFilter())
+            return isRunning;
+
+        isRunning = true;
+
         std::function<void()> fun_async = std::bind(&NpcapCom::startCapture, this);
         opensource::ctrlfrmb::ThreadPool::Instance().submit(fun_async);
+        return isRunning;
     }
 
     void NpcapCom::stopCapture()
     {
+        isRunning = false;
+
         if (handle) {
             pcap_close(handle);
             handle = NULL;

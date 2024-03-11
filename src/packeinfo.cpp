@@ -8,6 +8,10 @@ PacketInfoModel::PacketInfoModel(QObject *parent)
 {
 }
 
+PacketInfoModel::~PacketInfoModel() {
+    clearPacket();
+}
+
 int PacketInfoModel::rowCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent);
@@ -83,6 +87,20 @@ QVariant PacketInfoModel::headerData(int section, Qt::Orientation orientation, i
     return QVariant();
 }
 
+void PacketInfoModel::loadPackect(const std::vector<figkey::PacketInfo>& packets) {
+    clearPacket();
+
+    QMutexLocker locker(&m_mutex);
+    if (!packets.empty()) {
+        // 添加新数据包
+        beginInsertRows(QModelIndex(), 0, packets.size() - 1);
+        for (auto&& packet : packets) {
+            m_data.append(std::move(packet));
+        }
+        endInsertRows();
+    }
+}
+
 void PacketInfoModel::addPacket(const figkey::PacketInfo &packet)
 {
     QMutexLocker locker(&m_mutex);
@@ -99,20 +117,27 @@ void PacketInfoModel::addPacket(const figkey::PacketInfo &packet)
     endInsertRows();
 }
 
-figkey::PacketInfo PacketInfoModel::getFirstPacket()
-{
-    QMutexLocker locker(&m_mutex); // 加锁
-    if (m_data.isEmpty())
-        return figkey::PacketInfo(); // 或者返回一个默认的PacketInfo
+void PacketInfoModel::clearPacket() {
+    QMutexLocker locker(&m_mutex);
 
-    return m_data.first();
+    // 移除旧的数据
+    if (!m_data.isEmpty()) {
+        beginRemoveRows(QModelIndex(), 0, m_data.size() - 1);
+        m_data.clear();
+        endRemoveRows();
+    }
 }
 
-figkey::PacketInfo PacketInfoModel::getLastPacket()
-{
+figkey::PacketInfo PacketInfoModel::getPacketByIndex(int index) {
     QMutexLocker locker(&m_mutex); // 加锁
     if (m_data.isEmpty())
         return figkey::PacketInfo(); // 或者返回一个默认的PacketInfo
 
-    return m_data.last();
+    if (index < 0 )
+        return m_data.first();
+
+    if (index >= m_data.size())
+        return m_data.last();
+
+    return m_data[index];
 }

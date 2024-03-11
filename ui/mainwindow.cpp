@@ -1,11 +1,4 @@
-﻿#include "mainwindow.h"
-#include "ui_mainwindow.h"
-#include "filterwindow.h"
-#include "doipclientwindow.h"
-#include "ipcap.h"
-#include "config.h"
-#include "protocol/ip.h"
-#include <QDebug>
+﻿#include <QDebug>
 #include <QMessageBox>
 #include <QTimer>
 #include <QScrollBar>
@@ -15,20 +8,28 @@
 #include <QInputDialog>
 #include <QFileDialog>
 
-#define SQLITE_DATABASE_PATH "/db/figkey.db"
+#include "mainwindow.h"
+#include "ui_mainwindow.h"
+#include "filterwindow.h"
+#include "doipclientwindow.h"
+#include "ipcap.h"
+#include "config.h"
+#include "protocol/ip.h"
 
-MainWindow::MainWindow(QWidget *parent) :
+MainWindow::MainWindow(bool isStart, QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
-    initWindow();
+    initWindow(isStart);
 }
 
 MainWindow::~MainWindow()
 {
     exitWindow();
+
+    QSqlDatabase::removeDatabase(FKCAP_SQLITE_CONNECT_NAME);
 
     figkey::IPPacketParse::Instance().setCallback(nullptr);
 
@@ -51,7 +52,9 @@ void MainWindow::initTableView() {
     ui->tableView->setColumnWidth(3, 110);
     ui->tableView->setColumnWidth(4, 55);
     ui->tableView->setColumnWidth(5, 50);
-    ui->tableView->horizontalHeader()->setSectionResizeMode(6, QHeaderView::Stretch);
+
+    //ui->tableView->horizontalHeader()->setSectionResizeMode(6, QHeaderView::Stretch);
+    connect(ui->tableView, &QTableView::clicked, this, &MainWindow::on_tableView_clicked);
 }
 
 void MainWindow::initTreeView() {
@@ -67,6 +70,7 @@ void MainWindow::initTreeView() {
         QStandardItem *item = new QStandardItem(headerList[i] + " ");
         // 设置文本对齐方式为右对齐
         item->setTextAlignment(Qt::AlignVCenter);
+        item->setEditable(false); // 设置该项为不可编辑
         tvm->setItem(i, 0, item);
     }
 
@@ -76,68 +80,18 @@ void MainWindow::initTreeView() {
 
     ui->treeView->setModel(tvm);
 
-    // 设置第一列的列宽为180，且获取水平表头对象并设置对齐方式为 Qt::AlignHCenter
+    // 设置第一列的列宽为150，且获取水平表头对象并设置对齐方式为 Qt::AlignHCenter
     ui->treeView->setColumnWidth(0, 150);
     ui->treeView->header()->setDefaultAlignment(Qt::AlignHCenter);
 }
 
-void renameFileIfExists(const QString &filePath)
-{
-    QFileInfo fileInfo(filePath);
-    if (fileInfo.exists() && fileInfo.isFile())
-    {
-        bool ok;
-        QString text = QInputDialog::getText(nullptr, "File exists",
-                                             "File is already exists, please enter new name:",
-                                             QLineEdit::Normal,
-                                             fileInfo.fileName(), &ok);
-        if (ok && !text.isEmpty())
-        {
-            // 执行重命名操作
-            QString newFilePath = fileInfo.dir().filePath(text);
-            if (QFile::rename(filePath, newFilePath))
-            {
-                QMessageBox::information(nullptr, "Rename success",
-                                         "File has been renamed successfully",
-                                         QMessageBox::Ok);
-                return;
-            }
-        }
-
-        if(QFile::remove(filePath))
-        {
-            QMessageBox::information(nullptr, "File deletion",
-                                     "File has been deleted successfully",
-                                     QMessageBox::Ok);
-        }
-        else
-        {
-            QMessageBox::warning(nullptr, "File deletion",
-                                 "Failed to delete the file",
-                                 QMessageBox::Ok);
-        }
-    }
-    else
-    {
-        // 文件不存在，进行其他操作...
-    }
-}
-
-void MainWindow::initWindow()
+void MainWindow::initWindow(bool isStart)
 {
     initTableView();
     initTreeView();
 
     using namespace figkey;
-
-    QString path = QCoreApplication::applicationDirPath();
-    path+=SQLITE_DATABASE_PATH;
-    renameFileIfExists(path);
-    db.openFile(path);
-
     const auto& cfg = CaptureConfig::Instance().getConfigInfo();
-
-    NpcapCom::Instance().asyncStartCapture();
 
     // 使用std::bind设置回调函数
     IPPacketParse::Instance().setCallback(std::bind(&MainWindow::processPacket, this, std::placeholders::_1));
@@ -156,11 +110,13 @@ void MainWindow::initWindow()
            userHasScrolled = false;
      });
 
-    ui->actionStart->setEnabled(false);
+    if (isStart) {
+        on_actionStart_triggered();
+    }
 }
 
 void MainWindow::exitWindow() {
-    figkey::NpcapCom::Instance().stopCapture();
+    figkey::NpcapCom::Instance().exit();
     if(timerUpdateUI)
         timerUpdateUI->stop();
     db.closeFile();
@@ -177,21 +133,19 @@ void MainWindow::closeEvent(QCloseEvent *event) {
     }
 }
 
-void MainWindow::updateTreeView() {
-    const auto& info = pim->getLastPacket(); //获取首行数据
-
+void MainWindow::updateTreeView(const figkey::PacketInfo& packet) {
     QStringList valueList;
-    valueList << QString::fromStdString(info.timestamp)
-              << QString::number(info.err)
-              << QString::fromStdString(info.srcIP)
-              << QString::fromStdString(info.destIP)
-              << QString::fromStdString(info.srcMAC)
-              << QString::fromStdString(info.destMAC)
-              << QString::number(info.srcPort)
-              << QString::number(info.destPort)
-              << QString::number(info.protocolType)
-              << QString::number(info.payloadLength)
-              << QString::fromStdString(info.data);
+    valueList << QString::fromStdString(packet.timestamp)
+              << QString::number(packet.err)
+              << QString::fromStdString(packet.srcIP)
+              << QString::fromStdString(packet.destIP)
+              << QString::fromStdString(packet.srcMAC)
+              << QString::fromStdString(packet.destMAC)
+              << QString::number(packet.srcPort)
+              << QString::number(packet.destPort)
+              << QString::number(packet.protocolType)
+              << QString::number(packet.payloadLength)
+              << QString::fromStdString(packet.data);
 
     for(int i = 0; i < valueList.size(); i++) {
         QStandardItem *item = new QStandardItem(valueList[i]);
@@ -199,7 +153,7 @@ void MainWindow::updateTreeView() {
     }
 
     QStringList headers;
-    headers <<"Index:"<<QString::number(info.index);
+    headers <<"Index:"<<QString::number(packet.index);
     tvm->setHorizontalHeaderLabels(headers);
 
     ui->treeView->update();
@@ -208,7 +162,6 @@ void MainWindow::updateTreeView() {
 void MainWindow::updateUI() {
     if (figkey::NpcapCom::Instance().getIsRunning()) {
         ui->tableView->update();
-        updateTreeView(); //更新Treeview
 
         if (!userHasScrolled || scrollBarAtBottom)
             ui->tableView->scrollToBottom();
@@ -221,7 +174,8 @@ void MainWindow::processPacket(figkey::PacketInfo packetInfo)
     //qDebug() <<"capture "<<++count;
     QMutexLocker locker(&mutexPacket);
     packetInfo.index = ++packetCounter;
-
+    if (1 == packetInfo.index)
+        updateTreeView(packetInfo);
     pim->addPacket(packetInfo);
     db.storePacket(packetInfo);
 }
@@ -240,11 +194,32 @@ void MainWindow::on_actionStop_triggered()
 void MainWindow::on_actionStart_triggered()
 {
     qDebug() <<"start capture";
-    figkey::NpcapCom::Instance().asyncStartCapture();
-
+    using namespace figkey;
     ui->actionStart->setEnabled(false);
-    ui->actionPause->setEnabled(true);
-    ui->actionStop->setEnabled(true);
+
+    QMutexLocker locker(&mutexPacket);
+    if (packetCounter > 0) {
+        db.checkFile();
+        packetCounter = 0;
+    }
+
+    pim->clearPacket();
+    ui->tableView->update();
+
+    if (db.openFile()) {
+        ui->actionSave->setEnabled(true);
+    }
+
+    if (NpcapCom::Instance().run()) {
+        ui->actionPause->setEnabled(true);
+        ui->actionStop->setEnabled(true);
+    }
+    else {
+        ui->actionStart->setEnabled(true);
+        QMessageBox::critical(nullptr, "Error",
+                              QString("Failed to capture network data, please check the configuration file or contact the administrator")
+                              );
+    }
 }
 
 void MainWindow::pauseCapture()
@@ -297,30 +272,59 @@ void MainWindow::on_actionFilter_Clear_triggered()
 
 void MainWindow::on_actionDoIP_Client_triggered()
 {
-    DoIPClientWindow dc;
-    dc.adjustSize();
-    dc.setFixedSize(dc.size());
-    dc.exec();
+    static DoIPClientWindow dc;
+    if (!dc.isVisible()) {
+        dc.adjustSize();
+        dc.setFixedSize(dc.size());
+        dc.show();
+    }
 }
 
 void MainWindow::on_actionOpen_triggered()
 {
     auto& pcap = figkey::NpcapCom::Instance();
-    if(pcap.getIsRunning()) {
-        QMessageBox::warning(this, "warnning", "Data is currently being captured, please stop capturing first and remember to save the data.");
-        return;
+
+    if (pcap.getIsRunning()) {
+        // 调用函数停止数据捕获
+        on_actionStop_triggered();
     }
 
+    if (db.loadFile()) {
+       auto packets = db.getPacket(1, figkey::CaptureConfig::Instance().getConfigInfo().displayRows);
+       if (packets.empty()) {
+           QMessageBox::warning(nullptr, "Warning",
+                                QString("The current database file is an empty file")
+                                );
+           return;
+       }
 
-    QString fileName = QFileDialog::getOpenFileName(
-    nullptr,             // 父窗口，如果没有则为nullptr
-    "Open Capture File",         // 对话框标题
-    QCoreApplication::applicationDirPath(),             // 默认打开路径
-    "Sqlite DataBase (*.db);;Text files (*.txt)");    // 文件过滤器
-    //db.openFile()
+       {
+           QMutexLocker locker(&mutexPacket);
+           packetCounter = 0;
+       }
+
+       pim->loadPackect(packets);
+       ui->tableView->update();
+    }
 }
 
 void MainWindow::on_actionSave_triggered()
+{
+    ui->actionSave->setEnabled(false);
+    db.saveFile();
+}
+
+void MainWindow::on_tableView_clicked(const QModelIndex &index)
+{
+    if (index.isValid()) {
+        int rowIndex = index.row();
+        QModelIndex firstColumnIndex = index.sibling(rowIndex, 0);  // 获得该行第一列的 index
+        auto packet = pim->getPacketByIndex(firstColumnIndex.data().toInt());
+        updateTreeView(packet);
+    }
+}
+
+void MainWindow::on_actionNetwork_Assist_triggered()
 {
 
 }

@@ -1,18 +1,21 @@
 ﻿// ipcap.cpp: 定义应用程序的入口点。
 //
 #include <iomanip>
-#ifdef _WIN32
-#include <WinSock2.h>
-#include <ws2ipdef.h>
-#include <WS2tcpip.h>
 #include <sstream>
 #include <atomic>
 #include <chrono>
+#ifdef _WIN32
+#ifdef _WIN32_WINNT
+#undef _WIN32_WINNT
+#endif
+#define _WIN32_WINNT 0x6000
+#include <WinSock2.h>
+#include <ws2ipdef.h>
+#include <WS2tcpip.h>
 #endif // _WIN32
+
 #include "def.h"
 #include "packet.h"
-#include <ws2tcpip.h>
-#pragma comment(lib, "ws2_32.lib")
 
 namespace figkey {
 
@@ -332,7 +335,7 @@ namespace figkey {
         const uint16_t* ptr = reinterpret_cast<const uint16_t*>(ipHeader);
 
         // 将头部的每个 16 位字相加
-        for (int i = 0; i < sizeof(ip_header) / 2; ++i) {
+        for (size_t i = 0; i < sizeof(ip_header) / 2; ++i) {
             if (i != 5) { // 跳过原校验和字段
                 sum += ntohs(ptr[i]);
             }
@@ -347,36 +350,36 @@ namespace figkey {
         return ~sum;
     }
 
-    static bool isIpAddressValid(uint32_t ip) {
-        // 转换为主机字节序
-        ip = ntohl(ip);
+//    static bool isIpAddressValid(uint32_t ip) {
+//        // 转换为主机字节序
+//        ip = ntohl(ip);
 
-        // 检查特殊地址
-        if (ip == 0 || ip == 0xFFFFFFFF) { // 0.0.0.0 和 255.255.255.255
-            return false;
-        }
+//        // 检查特殊地址
+//        if (ip == 0 || ip == 0xFFFFFFFF) { // 0.0.0.0 和 255.255.255.255
+//            return false;
+//        }
 
-        // 检查保留地址
-        // 示例：127.0.0.0/8 (本地回环地址)
-        if ((ip & 0xFF000000) == 0x7F000000) {
-            return false;
-        }
+//        // 检查保留地址
+//        // 示例：127.0.0.0/8 (本地回环地址)
+//        if ((ip & 0xFF000000) == 0x7F000000) {
+//            return false;
+//        }
 
-        // 添加更多地址范围的检查...
-        /*0.0.0.0：
+//        // 添加更多地址范围的检查...
+//        /*0.0.0.0：
 
-        在客户端，这个地址通常用于表示“任意地址”或“所有接口”，例如，在绑定套接字时用作源地址。
-        在服务器端，它通常表示监听所有可用网络接口。
-        255.255.255.255：
+//        在客户端，这个地址通常用于表示“任意地址”或“所有接口”，例如，在绑定套接字时用作源地址。
+//        在服务器端，它通常表示监听所有可用网络接口。
+//        255.255.255.255：
 
-        这是一个有限广播地址，用于在本地网络上发送广播消息。
-        它通常不用于源地址，但可用于目的地址以在本地网络上发送广播。
-        回环地址(127.0.0.1 / 8)：
+//        这是一个有限广播地址，用于在本地网络上发送广播消息。
+//        它通常不用于源地址，但可用于目的地址以在本地网络上发送广播。
+//        回环地址(127.0.0.1 / 8)：
 
-        这是用于本地通信的地址。向这个地址发送的数据不会离开主机，而是直接回环。
-        它通常用于测试和本地通信。*/
-        return true;
-    }
+//        这是用于本地通信的地址。向这个地址发送的数据不会离开主机，而是直接回环。
+//        它通常用于测试和本地通信。*/
+//        return true;
+//    }
 
     uint8_t checkIpHeader(const ip_header* ipHeader, const size_t& packetSize) {
         if (!checkIpVersion(ipHeader->ihl_and_version))

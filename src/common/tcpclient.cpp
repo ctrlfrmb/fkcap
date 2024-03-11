@@ -6,7 +6,13 @@
  * @date    2024.01.18
  * Copyright (c) opensource::ctrlfrmb 2024-2034
  */
-
+#ifdef _WIN32
+#ifdef _WIN32_WINNT
+#undef _WIN32_WINNT
+#endif
+#define _WIN32_WINNT 0x6000
+#include <ws2tcpip.h>
+#endif
 #include "common/tcpclient.h"
 
 #define DEFAULT_BUFFER_SIZE 1024
@@ -27,8 +33,9 @@ TCPClient::~TCPClient() {
 }
 
 bool TCPClient::Connect(const char* ipAddress, int port, const char* localIP) {
-    if (connected)
+    if (connected) {
         return true;
+    }
 
 	// Initialize Winsock
 	WSADATA wsaData;
@@ -79,8 +86,10 @@ bool TCPClient::Connect(const char* ipAddress, int port, const char* localIP) {
     stopRecvThread.store(false);
 
 	// Start the receive thread
-    if (nullptr == recvThread)
+    if (nullptr == recvThread) {
         recvThread = new std::thread(&TCPClient::ReceiveThread, this);
+    }
+
 	return true;
 }
 

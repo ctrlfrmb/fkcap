@@ -38,11 +38,11 @@ public:
 
     bool getIsRunning() const ;
 
-    void startCapture();
-
-    void asyncStartCapture();
+    bool run();
 
     void stopCapture();
+
+    void exit();
 
 private:
     pcap_t* handle;
@@ -59,6 +59,8 @@ private:
     bool pcapFilter(uint32_t netmask = PCAP_NETMASK_UNKNOWN);
 
     static void pcapHandler(u_char* user, const struct pcap_pkthdr* pkthdr, const u_char* packet);
+
+    void startCapture();
 };
 
 }  // namespace figkey

@@ -112,7 +112,7 @@ namespace figkey {
         if ((filterProtocol != config.end()) && !filterProtocol->second.empty())
         {
             configInfo.filter.protocolType = std::stoi(filterProtocol->second);
-            if (configInfo.filter.protocolType < PROTOCOL_TYPE_DEFAULT || configInfo.filter.protocolType > PROTOCOL_TYPE_UDS)
+            if (configInfo.filter.protocolType > PROTOCOL_TYPE_UDS)
                 configInfo.filter.protocolType = PROTOCOL_TYPE_DEFAULT;
             std::cout << "Protocol filtering configuration information : " << static_cast<int>(configInfo.filter.protocolType) << std::endl;
         }

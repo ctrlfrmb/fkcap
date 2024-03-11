@@ -112,7 +112,7 @@ namespace figkey {
 
     // Structure for load capture config information
     struct CaptureConfigInfo {
-        uint16_t displayRows{100};
+        uint32_t displayRows{10000};
         uint16_t timeUpdateUI{1000};        //ms
         uint16_t timeSqlTransaction{100};
         uint16_t doipClientSend{5};

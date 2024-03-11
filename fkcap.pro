@@ -34,7 +34,8 @@ SOURCES += main.cpp\
     src/doip/diagnosticmessagehandler.cpp \
     src/doip/doipgenericheaderhandler.cpp \
     src/common/tcpclient.cpp \
-    src/common/udpclient.cpp
+    src/common/udpclient.cpp \
+    ui/networkassistwindow.cpp
 
 HEADERS  += ui/mainwindow.h \
     include/common/thread_pool.hpp \
@@ -75,16 +76,20 @@ HEADERS  += ui/mainwindow.h \
     include/doip/diagnosticmessagehandler.h \
     include/doip/doipgenericheaderhandler.h \
     include/common/tcpclient.h \
-    include/common/udpclient.h
+    include/common/udpclient.h \
+    ui/networkassistwindow.h
 
 FORMS    += ui/mainwindow.ui \
     ui/devicewindow.ui \
     ui/filterwindow.ui \
-    ui/doipclientwindow.ui
+    ui/doipclientwindow.ui \
+    ui/networkassistwindow.ui
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/include/npcap1.13/lib/x86_64/ -lwpcap
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/include/npcap1.13/lib/x86_64/ -lwpcap
 else:unix: LIBS += -L$$PWD/include/npcap1.13/lib/x86_64/ -lwpcap
+
+LIBS += -lws2_32
 
 INCLUDEPATH += $$PWD/include/npcap1.13/lib/x86_64
 DEPENDPATH += $$PWD/include/npcap1.13/lib/x86_64
