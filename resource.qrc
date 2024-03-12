@@ -12,6 +12,7 @@
         <file>resource/icons/doip_server.png</file>
         <file>resource/icons/db_open.png</file>
         <file>resource/icons/db_save.png</file>
-        <file>resource/icons/network_assist.png</file>
+        <file>resource/icons/client.png</file>
+        <file>resource/icons/server.png</file>
     </qresource>
 </RCC>

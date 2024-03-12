@@ -15,27 +15,27 @@
   </property>
   <property name="windowIcon">
    <iconset resource="../resource.qrc">
-    <normaloff>:/images/resource/icons/network_assist.png</normaloff>:/images/resource/icons/network_assist.png</iconset>
+    <normaloff>:/images/resource/icons/main_window.ico</normaloff>:/images/resource/icons/main_window.ico</iconset>
   </property>
   <widget class="QGroupBox" name="groupBox_2">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>40</y>
-     <width>601</width>
-     <height>201</height>
+     <x>10</x>
+     <y>175</y>
+     <width>620</width>
+     <height>185</height>
     </rect>
    </property>
    <property name="title">
-    <string>DoIP Client Send(UDS)</string>
+    <string>send </string>
    </property>
    <widget class="QTableWidget" name="tableSend">
     <property name="geometry">
      <rect>
-      <x>0</x>
-      <y>14</y>
-      <width>601</width>
-      <height>181</height>
+      <x>10</x>
+      <y>25</y>
+      <width>600</width>
+      <height>150</height>
      </rect>
     </property>
    </widget>
@@ -43,22 +43,151 @@
   <widget class="QGroupBox" name="groupBox_3">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>240</y>
-     <width>601</width>
-     <height>201</height>
+     <x>10</x>
+     <y>365</y>
+     <width>620</width>
+     <height>185</height>
     </rect>
    </property>
    <property name="title">
-    <string>DoIP Server Response</string>
+    <string>receive</string>
    </property>
    <widget class="QTableWidget" name="tableReceive">
     <property name="geometry">
      <rect>
-      <x>0</x>
-      <y>14</y>
-      <width>601</width>
-      <height>181</height>
+      <x>10</x>
+      <y>25</y>
+      <width>600</width>
+      <height>150</height>
+     </rect>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QGroupBox" name="groupBox_4">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>5</y>
+     <width>620</width>
+     <height>165</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>setting</string>
+   </property>
+   <widget class="QGroupBox" name="groupBox">
+    <property name="geometry">
+     <rect>
+      <x>315</x>
+      <y>20</y>
+      <width>295</width>
+      <height>140</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string/>
+    </property>
+    <widget class="QPushButton" name="buttonConnect">
+     <property name="geometry">
+      <rect>
+       <x>40</x>
+       <y>30</y>
+       <width>91</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>connect</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="buttonDisconnect">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>40</x>
+       <y>60</y>
+       <width>91</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>disconnect</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="buttonSendPeriod">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>160</x>
+       <y>60</y>
+       <width>91</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Send Period</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="buttonSendSequence">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>160</x>
+       <y>90</y>
+       <width>91</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Send Sequence</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="buttonSendReceive">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>160</x>
+       <y>30</y>
+       <width>91</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Send Receive</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="buttonSend">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>40</x>
+       <y>90</y>
+       <width>91</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Send</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QListWidget" name="listSetting">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>25</y>
+      <width>300</width>
+      <height>130</height>
      </rect>
     </property>
    </widget>

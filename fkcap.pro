@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui sql
+QT       += core gui sql network
 CONFIG += c++11
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -18,7 +18,12 @@ INCLUDEPATH += $$PWD\ipcap\include
 INCLUDEPATH += $$PWD\include\npcap1.13\include
 
 SOURCES += main.cpp\
-        ui/mainwindow.cpp \
+    src/common/basecomm.cpp \
+    src/common/tcpcomm.cpp \
+    src/common/udpcomm.cpp \
+    src/common/tcpclient.cpp \
+    src/common/udpclient.cpp \
+    ui/mainwindow.cpp \
     ipcap/src/protocol/doip.cpp \
     ipcap/src/protocol/ip.cpp \
     ipcap/src/protocol/uds.cpp \
@@ -33,12 +38,15 @@ SOURCES += main.cpp\
     src/doip/doipclient.cpp \
     src/doip/diagnosticmessagehandler.cpp \
     src/doip/doipgenericheaderhandler.cpp \
-    src/common/tcpclient.cpp \
-    src/common/udpclient.cpp \
     ui/networkassistwindow.cpp
 
 HEADERS  += ui/mainwindow.h \
+    include/common/basecomm.h \
+    include/common/tcpcomm.h \
+    include/common/udpcomm.h \
     include/common/thread_pool.hpp \
+    include/common/tcpclient.h \
+    include/common/udpclient.h \
     include/npcap1.13/include/pcap/bluetooth.h \
     include/npcap1.13/include/pcap/bpf.h \
     include/npcap1.13/include/pcap/can_socketcan.h \
@@ -75,8 +83,6 @@ HEADERS  += ui/mainwindow.h \
     include/doip/doipclient.h \
     include/doip/diagnosticmessagehandler.h \
     include/doip/doipgenericheaderhandler.h \
-    include/common/tcpclient.h \
-    include/common/udpclient.h \
     ui/networkassistwindow.h
 
 FORMS    += ui/mainwindow.ui \

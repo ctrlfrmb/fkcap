@@ -88,7 +88,8 @@
     <property name="title">
      <string>Test</string>
     </property>
-    <addaction name="actionNetwork_Assist"/>
+    <addaction name="actionClient"/>
+    <addaction name="actionServer"/>
     <addaction name="actionDoIP_Client"/>
     <addaction name="actionDoIP_Server"/>
    </widget>
@@ -128,7 +129,8 @@
    <addaction name="actionFilter"/>
    <addaction name="actionFilter_Clear"/>
    <addaction name="separator"/>
-   <addaction name="actionNetwork_Assist"/>
+   <addaction name="actionClient"/>
+   <addaction name="actionServer"/>
    <addaction name="actionDoIP_Client"/>
    <addaction name="actionDoIP_Server"/>
    <addaction name="separator"/>
@@ -250,13 +252,28 @@
     <string>Open from file</string>
    </property>
   </action>
-  <action name="actionNetwork_Assist">
+  <action name="actionClient">
    <property name="icon">
     <iconset resource="../resource.qrc">
-     <normaloff>:/images/resource/icons/network_assist.png</normaloff>:/images/resource/icons/network_assist.png</iconset>
+     <normaloff>:/images/resource/icons/client.png</normaloff>:/images/resource/icons/client.png</iconset>
    </property>
    <property name="text">
-    <string>Network Assistants</string>
+    <string>Client</string>
+   </property>
+   <property name="toolTip">
+    <string>Support simulated udp/tcp client</string>
+   </property>
+  </action>
+  <action name="actionServer">
+   <property name="icon">
+    <iconset resource="../resource.qrc">
+     <normaloff>:/images/resource/icons/server.png</normaloff>:/images/resource/icons/server.png</iconset>
+   </property>
+   <property name="text">
+    <string>Server</string>
+   </property>
+   <property name="toolTip">
+    <string>Support simulated udp/tcp server</string>
    </property>
   </action>
  </widget>

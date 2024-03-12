@@ -1,11 +1,14 @@
 ﻿#ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "sqlite.h"
-#include "packeinfo.h"
 #include <QMainWindow>
 #include <QCloseEvent>
 #include <QStandardItemModel>
+
+#include "sqlite.h"
+#include "packeinfo.h"
+#include "networkassistwindow.h"
+#include "doipclientwindow.h"
 
 namespace Ui {
 class MainWindow;
@@ -23,6 +26,7 @@ public:
 
 public slots:
     void updateUI();  // 当数据变化时更新 UI
+    void onTableViewDoubleClicked(const QModelIndex& index);
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -47,7 +51,9 @@ private slots:
 
     void on_tableView_clicked(const QModelIndex &index);
 
-    void on_actionNetwork_Assist_triggered();
+    void on_actionClient_triggered();
+
+    void on_actionServer_triggered();
 
 private:
     void initTableView();
@@ -57,9 +63,14 @@ private:
     void updateTreeView(const figkey::PacketInfo& packet);
     void pauseCapture();
     void reumeCapture();
+    figkey::PacketInfo getPacketInfo(const QModelIndex &index, int window = -1);
 
 private:
     Ui::MainWindow *ui;
+
+    NetworkAssistWindow client;
+    NetworkAssistWindow server;
+    DoIPClientWindow doipClient;
 
     QMutex mutexPacket;
     uint64_t packetCounter{ 0 };

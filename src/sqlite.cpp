@@ -83,21 +83,13 @@ void SqliteCom::moveFile() {
 
 void SqliteCom::closeDataBase() {
     if (db.isOpen()) {
-        if (db.transaction()) {
-            db.commit();
-        }
+        db.commit();
         db.close();
     }
 }
 
 void SqliteCom::closeFile()
 {
-    // 停止定时器
-    if (0 != timerId) {
-        this->killTimer(timerId);
-        timerId = 0;
-    }
-
     closeDataBase();
 }
 
@@ -177,9 +169,6 @@ bool SqliteCom::openFile()
         return false;
     }
 
-    // 启动定时器，保存定时器ID
-    timerId = this->startTimer(figkey::CaptureConfig::Instance().getConfigInfo().timeSqlTransaction);
-
     return true;
 }
 
@@ -188,8 +177,8 @@ bool SqliteCom::storePacket(const figkey::PacketInfo &packet)
     if (!db.isOpen())
         return false;
 
-    if (!db.transaction()) {
-        db.transaction();  // 如果没有正在进行的事务，则开始一个新的事务
+    if (1 == packet.index) {
+        db.transaction();
     }
 
     query.prepare("INSERT INTO Packets (id, timestamp, error, srcIP, destIP, "
@@ -256,6 +245,18 @@ std::vector<figkey::PacketInfo> SqliteCom::getPacket(int start, int rows) {
     return results;
 }
 
+void SqliteCom::writeFile() {
+    if (!db.isOpen())
+        return;
+
+    // 提交事务
+    if (db.commit()) {
+        db.transaction();  // 开始下一个新的事务
+    }
+    else
+         qDebug() << "Error commit: " << db.lastError();
+}
+
 bool SqliteCom::createTableIfNotExists()
 {
     if (!query.exec("CREATE TABLE IF NOT EXISTS Packets "
@@ -270,13 +271,3 @@ bool SqliteCom::createTableIfNotExists()
     return true;
 }
 
-void SqliteCom::timerEvent(QTimerEvent * /* event */)
-{
-    if (!db.isOpen())
-       return;
-
-    // 提交事务
-    if (db.commit()) {
-        db.transaction();  // 开始下一个新的事务
-    }
-}

@@ -7,11 +7,11 @@
 #include <QDir>
 #include <QInputDialog>
 #include <QFileDialog>
+#include <QClipboard>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "filterwindow.h"
-#include "doipclientwindow.h"
 #include "ipcap.h"
 #include "config.h"
 #include "protocol/ip.h"
@@ -52,9 +52,22 @@ void MainWindow::initTableView() {
     ui->tableView->setColumnWidth(3, 110);
     ui->tableView->setColumnWidth(4, 55);
     ui->tableView->setColumnWidth(5, 50);
-
     //ui->tableView->horizontalHeader()->setSectionResizeMode(6, QHeaderView::Stretch);
+
+
+    connect(ui->tableView->verticalScrollBar(), &QScrollBar::valueChanged,
+             this, [&](int value) {
+               QScrollBar *scrollBar = ui->tableView->verticalScrollBar();
+               scrollBarAtBottom = value == scrollBar->maximum();
+               userHasScrolled = true;
+             });
+    connect(ui->tableView->verticalScrollBar(), &QScrollBar::sliderReleased, this, [&]() {
+       if (scrollBarAtBottom)
+           userHasScrolled = false;
+     });
+
     connect(ui->tableView, &QTableView::clicked, this, &MainWindow::on_tableView_clicked);
+    connect(ui->tableView, &QTableView::doubleClicked, this, &MainWindow::onTableViewDoubleClicked);
 }
 
 void MainWindow::initTreeView() {
@@ -98,17 +111,7 @@ void MainWindow::initWindow(bool isStart)
 
     timerUpdateUI = new QTimer(this);
     connect(timerUpdateUI, &QTimer::timeout, this, &MainWindow::updateUI);
-    timerUpdateUI->start(cfg.timeUpdateUI); // 设置时间间隔为 1000 毫秒
-    connect(ui->tableView->verticalScrollBar(), &QScrollBar::valueChanged,
-             this, [&](int value) {
-               QScrollBar *scrollBar = ui->tableView->verticalScrollBar();
-               scrollBarAtBottom = value == scrollBar->maximum();
-               userHasScrolled = true;
-             });
-    connect(ui->tableView->verticalScrollBar(), &QScrollBar::sliderReleased, this, [&]() {
-       if (scrollBarAtBottom)
-           userHasScrolled = false;
-     });
+    timerUpdateUI->start(cfg.timeUpdateUI);
 
     if (isStart) {
         on_actionStart_triggered();
@@ -117,6 +120,15 @@ void MainWindow::initWindow(bool isStart)
 
 void MainWindow::exitWindow() {
     figkey::NpcapCom::Instance().exit();
+    if (client.isVisible()) {
+        client.close();
+    }
+    if (server.isVisible()) {
+        server.close();
+    }
+    if (doipClient.isVisible()) {
+        doipClient.close();
+    }
     if(timerUpdateUI)
         timerUpdateUI->stop();
     db.closeFile();
@@ -160,6 +172,12 @@ void MainWindow::updateTreeView(const figkey::PacketInfo& packet) {
 }
 
 void MainWindow::updateUI() {
+    {
+        QMutexLocker locker(&mutexPacket);
+        if (packetCounter > 0)
+            db.writeFile();
+    }
+
     if (figkey::NpcapCom::Instance().getIsRunning()) {
         ui->tableView->update();
 
@@ -168,27 +186,44 @@ void MainWindow::updateUI() {
     }
 }
 
+void MainWindow::onTableViewDoubleClicked(const QModelIndex& index) {
+    if (index.column() == 6) {  // 如果是最后一列
+        QString text = index.data().toString();  // 获取该项的文本
+
+        QClipboard *clipboard = QApplication::clipboard();
+        clipboard->setText(text);
+    }
+}
+
 void MainWindow::processPacket(figkey::PacketInfo packetInfo)
 {
-    //static QAtomicInt count{0};
-    //qDebug() <<"capture "<<++count;
     QMutexLocker locker(&mutexPacket);
     packetInfo.index = ++packetCounter;
-    if (1 == packetInfo.index)
+    if (1 == packetInfo.index) {
+        pim->clearPacket();
+        ui->tableView->update();
         updateTreeView(packetInfo);
-    pim->addPacket(packetInfo);
+    }
+
     db.storePacket(packetInfo);
+    pim->addPacket(packetInfo);
 }
 
 void MainWindow::on_actionStop_triggered()
 {
     qDebug() <<"stop capture";
-    figkey::NpcapCom::Instance().stopCapture();
-    db.closeFile();
 
     ui->actionStart->setEnabled(true);
     ui->actionPause->setEnabled(false);
     ui->actionStop->setEnabled(false);
+
+    figkey::NpcapCom::Instance().stopCapture();
+
+    {
+        QMutexLocker locker(&mutexPacket);
+        db.closeFile();
+        packetCounter = 0;
+    }
 }
 
 void MainWindow::on_actionStart_triggered()
@@ -196,15 +231,6 @@ void MainWindow::on_actionStart_triggered()
     qDebug() <<"start capture";
     using namespace figkey;
     ui->actionStart->setEnabled(false);
-
-    QMutexLocker locker(&mutexPacket);
-    if (packetCounter > 0) {
-        db.checkFile();
-        packetCounter = 0;
-    }
-
-    pim->clearPacket();
-    ui->tableView->update();
 
     if (db.openFile()) {
         ui->actionSave->setEnabled(true);
@@ -272,11 +298,8 @@ void MainWindow::on_actionFilter_Clear_triggered()
 
 void MainWindow::on_actionDoIP_Client_triggered()
 {
-    static DoIPClientWindow dc;
-    if (!dc.isVisible()) {
-        dc.adjustSize();
-        dc.setFixedSize(dc.size());
-        dc.show();
+    if (!doipClient.isVisible()) {
+        doipClient.show();
     }
 }
 
@@ -298,11 +321,6 @@ void MainWindow::on_actionOpen_triggered()
            return;
        }
 
-       {
-           QMutexLocker locker(&mutexPacket);
-           packetCounter = 0;
-       }
-
        pim->loadPackect(packets);
        ui->tableView->update();
     }
@@ -312,19 +330,45 @@ void MainWindow::on_actionSave_triggered()
 {
     ui->actionSave->setEnabled(false);
     db.saveFile();
+    ui->actionSave->setEnabled(true);
+}
+
+figkey::PacketInfo MainWindow::getPacketInfo(const QModelIndex &index, int window) {
+    if (!index.isValid())
+        return {};
+
+    int rowIndex = index.row();
+    QModelIndex firstColumnIndex = index.sibling(rowIndex, 0);  // 获得该行第一列的 index
+    if (-1 == window)
+        return pim->getPacketByIndex(firstColumnIndex.data().toInt());
+
+    auto packet = pim->getPacketByIndex(firstColumnIndex.data().toInt());
+    packet.err = window;
+    return packet;
 }
 
 void MainWindow::on_tableView_clicked(const QModelIndex &index)
 {
-    if (index.isValid()) {
-        int rowIndex = index.row();
-        QModelIndex firstColumnIndex = index.sibling(rowIndex, 0);  // 获得该行第一列的 index
-        auto packet = pim->getPacketByIndex(firstColumnIndex.data().toInt());
-        updateTreeView(packet);
+    userHasScrolled = true;
+    updateTreeView(getPacketInfo(index));
+}
+
+void MainWindow::on_actionClient_triggered()
+{
+    if (!client.isVisible()) {
+        QIcon icon(":/images/resource/icons/client.png");
+        client.set(getPacketInfo(ui->tableView->currentIndex(), 0));
+        client.setWindowIcon(icon);
+        client.show();
     }
 }
 
-void MainWindow::on_actionNetwork_Assist_triggered()
+void MainWindow::on_actionServer_triggered()
 {
-
+    if (!server.isVisible()) {
+        QIcon icon(":/images/resource/icons/server.png");
+        server.set(getPacketInfo(ui->tableView->currentIndex(), 1));
+        server.setWindowIcon(icon);
+        server.show();
+    }
 }

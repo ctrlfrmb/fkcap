@@ -24,14 +24,13 @@ public:
 
     std::vector<figkey::PacketInfo> getPacket(int start, int rows);
 
+    void writeFile();
+
     void saveFile();
 
     void closeFile();
 
     void checkFile();
-
-protected:
-    void timerEvent(QTimerEvent *event);
 
 private:
 
@@ -44,7 +43,6 @@ private:
 
     QFile dbFile;
 
-    int timerId{ 0 };
     QSqlDatabase db;
     QSqlQuery query;
 };

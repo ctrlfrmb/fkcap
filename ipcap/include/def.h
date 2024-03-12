@@ -27,6 +27,8 @@
 #define CONFIG_ROOT_NODE_NAME "ipcap"
 #define CONFIG_CAPTURE_PROTOCOL_NODE "CaptureProtocol"
 #define CONFIG_DISPLAY_ROWS "DisplayRows"
+#define CONFIG_SEND_ROWS "SendRows"
+#define CONFIG_RECEIVE_ROWS "ReceiveRows"
 #define CONFIG_DOIP_CLIENT_SEND "DoIPClientSend"
 #define CONFIG_DOIP_CLIENT_RECEIVE "DoIPClientReceive"
 #define CONFIG_TIME_UPDATE_UI "TimeUpdateUI"
@@ -112,7 +114,9 @@ namespace figkey {
 
     // Structure for load capture config information
     struct CaptureConfigInfo {
-        uint32_t displayRows{10000};
+        uint32_t displayRows{50000};
+        uint16_t sendRows{20};
+        uint16_t receiveRows{10000};
         uint16_t timeUpdateUI{1000};        //ms
         uint16_t timeSqlTransaction{100};
         uint16_t doipClientSend{5};
@@ -215,18 +219,18 @@ namespace figkey {
 
     struct PacketInfo
     {
-        uint64_t index{0};               // 索引
-        std::string timestamp;           // 时间戳
-        uint8_t err;                     // 错误码
-        std::string srcIP{""};           // 源IP
-        std::string destIP{""};          // 目标IP
-        std::string srcMAC;              // 源MAC
-        std::string destMAC;             // 目标MAC
-        uint16_t srcPort;                // 源端口
-        uint16_t destPort;               // 目标端口
-        uint8_t protocolType;            // 协议类型，使用枚举类表示
-        uint16_t payloadLength;          // 负载长度
-        std::string data;                // 信息
+        uint64_t index{0};                  // 索引
+        std::string timestamp;              // 时间戳
+        uint8_t err;                        // 错误码
+        std::string srcIP;                  // 源IP
+        std::string destIP;                 // 目标IP
+        std::string srcMAC;                 // 源MAC
+        std::string destMAC;                // 目标MAC
+        uint16_t srcPort;                   // 源端口
+        uint16_t destPort;                  // 目标端口
+        uint8_t protocolType;               // 协议类型，使用枚举类表示
+        uint16_t payloadLength;             // 负载长度
+        std::string data;                   // 信息
     };
 
 }  // namespace figkey
