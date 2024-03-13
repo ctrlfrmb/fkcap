@@ -72,6 +72,13 @@ namespace figkey {
             std::cout << "Capture display rows : " << configInfo.displayRows << std::endl;
         }
 
+        auto tcpNoProxy = config.find(CONFIG_TCP_NO_PROXY);
+        if ((tcpNoProxy != config.end()) && !tcpNoProxy->second.empty())
+        {
+            configInfo.tcpNoProxy = (tcpNoProxy->second == "true");
+            std::cout << "tcp no proxy : " << configInfo.tcpNoProxy << std::endl;
+        }
+
         auto sendRows = config.find(CONFIG_SEND_ROWS);
         if ((sendRows != config.end()) && !sendRows->second.empty())
         {

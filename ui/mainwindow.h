@@ -24,10 +24,6 @@ public:
 
     void processPacket(figkey::PacketInfo packetInfo);
 
-public slots:
-    void updateUI();  // 当数据变化时更新 UI
-    void onTableViewDoubleClicked(const QModelIndex& index);
-
 protected:
     void closeEvent(QCloseEvent *event) override;
 
@@ -55,6 +51,10 @@ private slots:
 
     void on_actionServer_triggered();
 
+    void updateUI();
+
+    void onTableViewDoubleClicked(const QModelIndex& index);
+
 private:
     void initTableView();
     void initTreeView();
@@ -63,7 +63,6 @@ private:
     void updateTreeView(const figkey::PacketInfo& packet);
     void pauseCapture();
     void reumeCapture();
-    figkey::PacketInfo getPacketInfo(const QModelIndex &index, int window = -1);
 
 private:
     Ui::MainWindow *ui;
@@ -80,6 +79,7 @@ private:
     QTimer *timerUpdateUI{ nullptr};  // 将定时器定义为类的成员变量
     bool scrollBarAtBottom{ true };
     bool userHasScrolled{ false };
+    int currentIndex{ -1 };
 };
 
 #endif // MAINWINDOW_H

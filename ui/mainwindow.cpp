@@ -44,30 +44,27 @@ MainWindow::~MainWindow()
 
 void MainWindow::initTableView() {
     pim = new PacketInfoModel(this);
-    ui->tableView->setModel(pim);
+    this->ui->tableView->setModel(pim);
     // 设置列宽比例 "Index" "Timestamp" "Source IP" "Destination IP" "Protocol" "Payload Length" "Information"
-    ui->tableView->setColumnWidth(0, 50);
-    ui->tableView->setColumnWidth(1, 100);
-    ui->tableView->setColumnWidth(2, 110);
-    ui->tableView->setColumnWidth(3, 110);
-    ui->tableView->setColumnWidth(4, 55);
-    ui->tableView->setColumnWidth(5, 50);
-    //ui->tableView->horizontalHeader()->setSectionResizeMode(6, QHeaderView::Stretch);
+    this->ui->tableView->setColumnWidth(0, 50);
+    this->ui->tableView->setColumnWidth(1, 100);
+    this->ui->tableView->setColumnWidth(2, 110);
+    this->ui->tableView->setColumnWidth(3, 110);
+    this->ui->tableView->setColumnWidth(4, 55);
+    this->ui->tableView->setColumnWidth(5, 50);
 
-
-    connect(ui->tableView->verticalScrollBar(), &QScrollBar::valueChanged,
+    connect(this->ui->tableView->verticalScrollBar(), &QScrollBar::valueChanged,
              this, [&](int value) {
-               QScrollBar *scrollBar = ui->tableView->verticalScrollBar();
+               QScrollBar *scrollBar = this->ui->tableView->verticalScrollBar();
                scrollBarAtBottom = value == scrollBar->maximum();
                userHasScrolled = true;
              });
-    connect(ui->tableView->verticalScrollBar(), &QScrollBar::sliderReleased, this, [&]() {
+    connect(this->ui->tableView->verticalScrollBar(), &QScrollBar::sliderReleased, this, [&]() {
        if (scrollBarAtBottom)
            userHasScrolled = false;
      });
 
-    connect(ui->tableView, &QTableView::clicked, this, &MainWindow::on_tableView_clicked);
-    connect(ui->tableView, &QTableView::doubleClicked, this, &MainWindow::onTableViewDoubleClicked);
+    connect(this->ui->tableView, &QTableView::doubleClicked, this, &MainWindow::onTableViewDoubleClicked);
 }
 
 void MainWindow::initTreeView() {
@@ -102,6 +99,7 @@ void MainWindow::initWindow(bool isStart)
 {
     initTableView();
     initTreeView();
+    server.setWindow(true);
 
     using namespace figkey;
     const auto& cfg = CaptureConfig::Instance().getConfigInfo();
@@ -202,7 +200,7 @@ void MainWindow::processPacket(figkey::PacketInfo packetInfo)
     if (1 == packetInfo.index) {
         pim->clearPacket();
         ui->tableView->update();
-        updateTreeView(packetInfo);
+        //updateTreeView(packetInfo);
     }
 
     db.storePacket(packetInfo);
@@ -333,32 +331,25 @@ void MainWindow::on_actionSave_triggered()
     ui->actionSave->setEnabled(true);
 }
 
-figkey::PacketInfo MainWindow::getPacketInfo(const QModelIndex &index, int window) {
-    if (!index.isValid())
-        return {};
-
-    int rowIndex = index.row();
-    QModelIndex firstColumnIndex = index.sibling(rowIndex, 0);  // 获得该行第一列的 index
-    if (-1 == window)
-        return pim->getPacketByIndex(firstColumnIndex.data().toInt());
-
-    auto packet = pim->getPacketByIndex(firstColumnIndex.data().toInt());
-    packet.err = window;
-    return packet;
-}
-
 void MainWindow::on_tableView_clicked(const QModelIndex &index)
 {
+    if (!index.isValid())
+        return;
+
+    QAbstractTableModel* model = qobject_cast<QAbstractTableModel*>(ui->tableView->model());
+    if (!model)
+        return;
+
     userHasScrolled = true;
-    updateTreeView(getPacketInfo(index));
+    scrollBarAtBottom = false;
+    currentIndex = index.row();
+    updateTreeView(pim->getPacketByIndex(currentIndex));
 }
 
 void MainWindow::on_actionClient_triggered()
 {
     if (!client.isVisible()) {
-        QIcon icon(":/images/resource/icons/client.png");
-        client.set(getPacketInfo(ui->tableView->currentIndex(), 0));
-        client.setWindowIcon(icon);
+        client.set(pim->getPacketByIndex(currentIndex));
         client.show();
     }
 }
@@ -366,9 +357,7 @@ void MainWindow::on_actionClient_triggered()
 void MainWindow::on_actionServer_triggered()
 {
     if (!server.isVisible()) {
-        QIcon icon(":/images/resource/icons/server.png");
-        server.set(getPacketInfo(ui->tableView->currentIndex(), 1));
-        server.setWindowIcon(icon);
+        server.set(pim->getPacketByIndex(currentIndex));
         server.show();
     }
 }

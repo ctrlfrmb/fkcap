@@ -18,12 +18,12 @@
 
 class TCPComm : public BaseComm {
 public:
-    TCPComm(const QString& localIp, const QString& serverIp,
+    TCPComm(const QString& clientIp, const QString& serverIp,
             int serverPort, bool isServer, QObject *parent = nullptr);
     virtual ~TCPComm();
 
     virtual bool start() override;
-    virtual qint64 sendData(const QByteArray &data) override;
+    virtual bool sendData(const QByteArray &data) override;
     virtual void stop() override;
 
 private slots:

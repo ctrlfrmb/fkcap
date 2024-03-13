@@ -130,11 +130,8 @@ void PacketInfoModel::clearPacket() {
 
 figkey::PacketInfo PacketInfoModel::getPacketByIndex(int index) {
     QMutexLocker locker(&m_mutex); // 加锁
-    if (m_data.isEmpty())
+    if (m_data.isEmpty() || (index < 0))
         return figkey::PacketInfo(); // 或者返回一个默认的PacketInfo
-
-    if (index < 0 )
-        return m_data.first();
 
     if (index >= m_data.size())
         return m_data.last();

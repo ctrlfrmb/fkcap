@@ -27,6 +27,7 @@
 #define CONFIG_ROOT_NODE_NAME "ipcap"
 #define CONFIG_CAPTURE_PROTOCOL_NODE "CaptureProtocol"
 #define CONFIG_DISPLAY_ROWS "DisplayRows"
+#define CONFIG_TCP_NO_PROXY "TCPNoProxy"
 #define CONFIG_SEND_ROWS "SendRows"
 #define CONFIG_RECEIVE_ROWS "ReceiveRows"
 #define CONFIG_DOIP_CLIENT_SEND "DoIPClientSend"
@@ -115,6 +116,7 @@ namespace figkey {
     // Structure for load capture config information
     struct CaptureConfigInfo {
         uint32_t displayRows{50000};
+        bool     tcpNoProxy{true};
         uint16_t sendRows{20};
         uint16_t receiveRows{10000};
         uint16_t timeUpdateUI{1000};        //ms

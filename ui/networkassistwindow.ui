@@ -11,11 +11,11 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Network Assistants</string>
+   <string>Network Assistants(Client)</string>
   </property>
   <property name="windowIcon">
    <iconset resource="../resource.qrc">
-    <normaloff>:/images/resource/icons/main_window.ico</normaloff>:/images/resource/icons/main_window.ico</iconset>
+    <normaloff>:/images/resource/icons/client.png</normaloff>:/images/resource/icons/client.png</iconset>
   </property>
   <widget class="QGroupBox" name="groupBox_2">
    <property name="geometry">
@@ -91,7 +91,7 @@
      <property name="geometry">
       <rect>
        <x>40</x>
-       <y>30</y>
+       <y>20</y>
        <width>91</width>
        <height>20</height>
       </rect>
@@ -107,7 +107,7 @@
      <property name="geometry">
       <rect>
        <x>40</x>
-       <y>60</y>
+       <y>50</y>
        <width>91</width>
        <height>20</height>
       </rect>
@@ -123,7 +123,7 @@
      <property name="geometry">
       <rect>
        <x>160</x>
-       <y>60</y>
+       <y>50</y>
        <width>91</width>
        <height>20</height>
       </rect>
@@ -139,7 +139,7 @@
      <property name="geometry">
       <rect>
        <x>160</x>
-       <y>90</y>
+       <y>80</y>
        <width>91</width>
        <height>20</height>
       </rect>
@@ -155,7 +155,7 @@
      <property name="geometry">
       <rect>
        <x>160</x>
-       <y>30</y>
+       <y>20</y>
        <width>91</width>
        <height>20</height>
       </rect>
@@ -171,13 +171,29 @@
      <property name="geometry">
       <rect>
        <x>40</x>
-       <y>90</y>
+       <y>80</y>
        <width>91</width>
        <height>20</height>
       </rect>
      </property>
      <property name="text">
       <string>Send</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="buttonStopSend">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>40</x>
+       <y>110</y>
+       <width>91</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Stop Send</string>
      </property>
     </widget>
    </widget>

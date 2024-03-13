@@ -19,6 +19,7 @@ public:
     explicit NetworkAssistWindow(QWidget *parent = nullptr);
     ~NetworkAssistWindow();
 
+    void setWindow(bool isService);
     void set(figkey::PacketInfo packet);
 
 public slots:
@@ -35,6 +36,14 @@ private slots:
 
     void on_buttonSend_clicked();
 
+    void on_buttonSendReceive_clicked();
+
+    void on_buttonSendPeriod_clicked();
+
+    void on_buttonSendSequence_clicked();
+
+    void on_buttonStopSend_clicked();
+
 private:
     void addSettingItem(bool isEdit, const QString& label, const QStringList& options);
     void initListSetting();
@@ -43,14 +52,27 @@ private:
     void initWindow();
     void exitWindow();
     void setProtocol(uint8_t protocol, QComboBox* comboBox);
+    void setClientIP(QComboBox* comboBox, const figkey::PacketInfo& packet);
+    void setServerIP(QComboBox* comboBox, const figkey::PacketInfo& packet);
+    void setServerPort(QComboBox* comboBox, const figkey::PacketInfo& packet);
     QComboBox* getSettingComboBox(const QString& label);
     QString getSettingItemValue(const QString& label) const;
+    void setSendButton(bool enable);
+    bool getSendChecked(int row);
+    void setSendChecked(int row, bool check);
+    QByteArray getSendData(int row);
+    bool sendMessage(int row, const QByteArray& data);
+    void updateSendChecked(const QString& timeStamp, const QString& dataString);
+    bool validateSendReceiveSequence(QList<QMap<QString, QVariant>>& list);
 
 private:
     Ui::NetworkAssistWindow *ui;
     QList<QComboBox*> comboBoxes;
-    bool isServer{ false };
+    bool isServer { false };
+    bool isASCII { false };
     BaseComm* comm{ nullptr };
+    QMap<int, QByteArray> recvDataMap;
+    bool stopSending = true;
 };
 
 #endif // NETWORKASSISTWINDOW_H

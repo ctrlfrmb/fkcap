@@ -8,12 +8,16 @@
  */
 #include "common/basecomm.h"
 
-BaseComm::BaseComm(const QString& localIp, const QString& serverIp,
+BaseComm::BaseComm(const QString& clientIp, const QString& serverIp,
              int serverPort, bool isServer, QObject *parent)
     : QObject(parent),
-      m_localIp(localIp),
+      m_clientIp(clientIp),
       m_serverIp(serverIp),
       m_serverPort(serverPort),
       m_isServer(isServer)
 {
+}
+
+QString BaseComm::getLastError() const {
+    return m_lastError;
 }

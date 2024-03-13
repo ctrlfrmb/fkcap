@@ -17,12 +17,12 @@
 
 class UDPComm : public BaseComm {
 public:
-    UDPComm(const QString& localIp, const QString& serverIp,
+    UDPComm(const QString& clientIp, const QString& serverIp,
             int serverPort, bool isServer, QObject *parent = nullptr);
     virtual ~UDPComm();
 
     virtual bool start() override;
-    virtual qint64 sendData(const QByteArray &data) override;
+    virtual bool sendData(const QByteArray &data) override;
     virtual void stop() override;
 
 private slots:
@@ -30,6 +30,9 @@ private slots:
 
 private:
     QUdpSocket m_socket;
+    bool m_isRunning = false;
+    QHostAddress m_partAddress;
+    quint16 m_partPort;
 };
 
 
