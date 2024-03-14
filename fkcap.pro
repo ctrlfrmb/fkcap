@@ -23,25 +23,25 @@ SOURCES += main.cpp\
     src/common/udpcomm.cpp \
     src/common/tcpclient.cpp \
     src/common/udpclient.cpp \
-    ui/mainwindow.cpp \
     ipcap/src/protocol/doip.cpp \
     ipcap/src/protocol/ip.cpp \
     ipcap/src/protocol/uds.cpp \
     ipcap/src/config.cpp \
     ipcap/src/ipcap.cpp \
     ipcap/src/packet.cpp \
-    ui/devicewindow.cpp \
     src/sqlite.cpp \
     src/packeinfo.cpp \
-    ui/filterwindow.cpp \
-    ui/doipclientwindow.cpp \
     src/doip/doipclient.cpp \
     src/doip/diagnosticmessagehandler.cpp \
     src/doip/doipgenericheaderhandler.cpp \
-    ui/networkassistwindow.cpp
+    ui/mainwindow.cpp \
+    ui/devicewindow.cpp \
+    ui/filterwindow.cpp \
+    ui/doipclientwindow.cpp \
+    ui/networkassistwindow.cpp \
+    ui/networkhelper.cpp
 
-HEADERS  += ui/mainwindow.h \
-    include/common/basecomm.h \
+HEADERS  += include/common/basecomm.h \
     include/common/tcpcomm.h \
     include/common/udpcomm.h \
     include/common/thread_pool.hpp \
@@ -74,16 +74,18 @@ HEADERS  += ui/mainwindow.h \
     ipcap/include/ipcap.h \
     ipcap/include/packet.h \
     ipcap/include/testip.h \
-    ui/devicewindow.h \
     include/sqlite.h \
     include/packeinfo.h \
-    ui/filterwindow.h \
-    ui/doipclientwindow.h \
     include/doip/doipclientconfig.h \
     include/doip/doipclient.h \
     include/doip/diagnosticmessagehandler.h \
     include/doip/doipgenericheaderhandler.h \
-    ui/networkassistwindow.h
+    ui/mainwindow.h \
+    ui/devicewindow.h \
+    ui/filterwindow.h \
+    ui/doipclientwindow.h \
+    ui/networkassistwindow.h \
+    ui/networkhelper.h
 
 FORMS    += ui/mainwindow.ui \
     ui/devicewindow.ui \

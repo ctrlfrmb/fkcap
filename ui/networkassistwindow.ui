@@ -106,8 +106,8 @@
      </property>
      <property name="geometry">
       <rect>
-       <x>40</x>
-       <y>50</y>
+       <x>160</x>
+       <y>20</y>
        <width>91</width>
        <height>20</height>
       </rect>
@@ -116,62 +116,14 @@
       <string>disconnect</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="buttonSendPeriod">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>160</x>
-       <y>50</y>
-       <width>91</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Send Period</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="buttonSendSequence">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>160</x>
-       <y>80</y>
-       <width>91</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Send Sequence</string>
-     </property>
-    </widget>
-    <widget class="QPushButton" name="buttonSendReceive">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>160</x>
-       <y>20</y>
-       <width>91</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Send Receive</string>
-     </property>
-    </widget>
     <widget class="QPushButton" name="buttonSend">
      <property name="enabled">
       <bool>false</bool>
      </property>
      <property name="geometry">
       <rect>
-       <x>40</x>
-       <y>80</y>
+       <x>160</x>
+       <y>60</y>
        <width>91</width>
        <height>20</height>
       </rect>
@@ -186,8 +138,8 @@
      </property>
      <property name="geometry">
       <rect>
-       <x>40</x>
-       <y>110</y>
+       <x>160</x>
+       <y>100</y>
        <width>91</width>
        <height>20</height>
       </rect>
@@ -195,6 +147,48 @@
      <property name="text">
       <string>Stop Send</string>
      </property>
+    </widget>
+    <widget class="QComboBox" name="comboBox">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>40</x>
+       <y>60</y>
+       <width>91</width>
+       <height>22</height>
+      </rect>
+     </property>
+     <property name="editable">
+      <bool>false</bool>
+     </property>
+     <property name="currentText">
+      <string>Once</string>
+     </property>
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <item>
+      <property name="text">
+       <string>Once</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Send&amp;Receive</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Cycle</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Sequence</string>
+      </property>
+     </item>
     </widget>
    </widget>
    <widget class="QListWidget" name="listSetting">
