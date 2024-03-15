@@ -35,7 +35,7 @@ namespace figkey {
         // 获取线程池的实例
         opensource::ctrlfrmb::ThreadPool& pool = opensource::ctrlfrmb::ThreadPool::Instance();
         // 设置线程池参数
-        pool.set(8, 2, 600); // 设置最大线程数为8，最小线程数为2，线程超时时间为600秒
+        pool.set(4, 2, 600); // 设置最大线程数为8，最小线程数为2，线程超时时间为600秒
     }
 
     void NpcapCom::exit() {

@@ -21,10 +21,10 @@ public:
     ~NetworkAssistWindow();
 
     void setWindow(bool isService);
+    bool saveConfigToFile();
+    static bool isServerByLoadFile(const QString& fileName, bool& hasServer);
+    bool loadConfigFromFile(const QString& fileName);
     void set(figkey::PacketInfo packet);
-
-public slots:
-    void onDataReceived(const QByteArray& data);
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -40,18 +40,25 @@ private slots:
 
     void on_comboBox_currentIndexChanged(int index);
 
+    bool sendMessage(int row);
+
+    void onDataReceived(const QByteArray& data);
+
 private:
     void closeComm();
+    void isSaveFile();
     void initWindow();
     void exitWindow();
+
     void setProtocol(uint8_t protocol, QComboBox* comboBox);
     void setClientIP(QComboBox* comboBox, const figkey::PacketInfo& packet);
     void setServerIP(QComboBox* comboBox, const figkey::PacketInfo& packet);
     void setServerPort(QComboBox* comboBox, const figkey::PacketInfo& packet);
     QComboBox* getSettingComboBox(const QString& label);
     QString getSettingItemValue(const QString& label) const;
-    bool sendMessage(int row);
+
     bool sendMessages(const QList<int>& sendList);
+    void sendNextMessage(const QList<int>& sendList, int currentIndex);
     bool sendAndReceiveMessage();
 
 private:
@@ -60,6 +67,7 @@ private:
     BaseComm *comm { nullptr };
 
     bool isServer { false };
+    bool canSaveFile { false };
 };
 
 #endif // NETWORKASSISTWINDOW_H

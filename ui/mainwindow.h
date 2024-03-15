@@ -55,6 +55,14 @@ private slots:
 
     void onTableViewDoubleClicked(const QModelIndex& index);
 
+    void on_tableView_customContextMenuRequested(const QPoint &pos);
+
+    void on_actionOpen_Test_triggered();
+
+    void on_actionSave_Test_triggered();
+
+    void on_actionSave_Server_Test_triggered();
+
 private:
     void initTableView();
     void initTreeView();
@@ -63,6 +71,8 @@ private:
     void updateTreeView(const figkey::PacketInfo& packet);
     void pauseCapture();
     void reumeCapture();
+
+    void updateTreeViewByIndex(const QModelIndex& index);
 
 private:
     Ui::MainWindow *ui;

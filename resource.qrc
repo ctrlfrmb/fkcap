@@ -14,5 +14,8 @@
         <file>resource/icons/db_save.png</file>
         <file>resource/icons/client.png</file>
         <file>resource/icons/server.png</file>
+        <file>resource/icons/client_test.png</file>
+        <file>resource/icons/open_test.png</file>
+        <file>resource/icons/server_test.png</file>
     </qresource>
 </RCC>

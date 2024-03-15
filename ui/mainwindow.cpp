@@ -331,8 +331,7 @@ void MainWindow::on_actionSave_triggered()
     ui->actionSave->setEnabled(true);
 }
 
-void MainWindow::on_tableView_clicked(const QModelIndex &index)
-{
+void MainWindow::updateTreeViewByIndex(const QModelIndex& index) {
     if (!index.isValid())
         return;
 
@@ -344,6 +343,11 @@ void MainWindow::on_tableView_clicked(const QModelIndex &index)
     scrollBarAtBottom = false;
     currentIndex = index.row();
     updateTreeView(pim->getPacketByIndex(currentIndex));
+}
+
+void MainWindow::on_tableView_clicked(const QModelIndex &index)
+{
+    updateTreeViewByIndex(index);
 }
 
 void MainWindow::on_actionClient_triggered()
@@ -360,4 +364,70 @@ void MainWindow::on_actionServer_triggered()
         server.set(pim->getPacketByIndex(currentIndex));
         server.show();
     }
+}
+
+void MainWindow::on_tableView_customContextMenuRequested(const QPoint &pos)
+{
+    updateTreeViewByIndex(ui->tableView->currentIndex());
+
+    QMenu *menu = new QMenu(this);
+
+    QAction *actionClient = new QAction("Client Test", this);
+    QAction *actionServer = new QAction("Server Test", this);
+    actionClient->setIcon(QIcon(":/images/resource/icons/client.png"));
+    actionServer->setIcon(QIcon(":/images/resource/icons/server.png"));
+
+    connect(actionClient, &QAction::triggered, this, &MainWindow::on_actionClient_triggered);
+    connect(actionServer, &QAction::triggered, this, &MainWindow::on_actionServer_triggered);
+
+    menu->addAction(actionClient);
+    menu->addAction(actionServer);
+
+    menu->popup(ui->tableView->viewport()->mapToGlobal(pos));
+}
+
+void MainWindow::on_actionOpen_Test_triggered()
+{
+
+     QString fileName = QFileDialog::getOpenFileName(this, "Open config file",
+                                                     QDir::homePath(),
+                                                     "Config Files (*.json)");
+
+     // Check if fileName is empty (cancel was pressed)
+     if (fileName.isEmpty()) {
+         QMessageBox::warning(this, "Warning", "No file selected.");
+         return;
+     }
+
+     bool isServer { true };
+     if (!NetworkAssistWindow::isServerByLoadFile(fileName, isServer))
+         return;
+
+     if (isServer) {
+         if (server.isVisible()) {
+             QMessageBox::information(this, tr("Information"),
+                                          tr("Please close the server test window before loading the configuration file."));
+             return;
+         }
+         server.loadConfigFromFile(fileName);
+     }
+     else {
+         if (client.isVisible()) {
+             QMessageBox::information(this, tr("Information"),
+                                          tr("Please close the client test window before loading the configuration file."));
+             return;
+         }
+
+         client.loadConfigFromFile(fileName);
+     }
+}
+
+void MainWindow::on_actionSave_Test_triggered()
+{
+    client.saveConfigToFile();
+}
+
+void MainWindow::on_actionSave_Server_Test_triggered()
+{
+    server.saveConfigToFile();
 }

@@ -164,14 +164,14 @@
       <bool>false</bool>
      </property>
      <property name="currentText">
-      <string>Once</string>
+      <string>Single</string>
      </property>
      <property name="currentIndex">
       <number>0</number>
      </property>
      <item>
       <property name="text">
-       <string>Once</string>
+       <string>Single</string>
       </property>
      </item>
      <item>
@@ -186,7 +186,7 @@
      </item>
      <item>
       <property name="text">
-       <string>Sequence</string>
+       <string>Many</string>
       </property>
      </item>
     </widget>

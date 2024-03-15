@@ -12,6 +12,8 @@
 #define SET_SERVER_IP_LABEL "Server IP"
 #define SET_SERVER_PORT_LABEL "Server Port"
 #define SET_DATA_TYPE_LABEL "Data Type"
+#define SET_ERROR_PROCESS_LABEL "Error Process"
+#define SET_CYCLE_SEND_MIN_TIME 5
 
 class NetworkHelper : public QObject
 {
@@ -31,32 +33,51 @@ public:
     int getNextRow(int row);
 
     void initListSetting();
+    bool isLooped(int start);
     void initTableSend();
     void initTableReceive();
 
+    bool setErrorInfo(int row, const QString& info);
+
     void setSendState(bool state);
-    void setCheckedSendTable(int row, bool check);
+    void setColumnCheckState(int row, bool check);
     bool isCheckedSendTable(int row);
-    void uncheckTableSend();
+    void setAllColumnUncheck();
+
+    void deleteTimer(QTimer* timer);
 
     void setSendAndReceive(bool state);
+    void removeReceiveTimer(int row);
     void stopReceiveTimers();
-    void getReceiveTimerMap();
+    void getReceiveTimers();
     void startReceiveTimers();
-    QList<int> checkReceiveDataMap(const QString& timeStamp, const QString& dataString);
+    void startSendAndReceive();
+
+    void setCycleSend(bool state);
+    bool startCycleTimers();
+    void stopCycleTimers();
+
+    QList<int> checkReceiveDataMap(const QString& timeStamp, const QByteArray& data);
 
     int getCheckedTableSend();
-    QList<int> getSendSequence(int start);
+    QList<int> getContinuousSendMessages(int start);
+    QList<int> getAllSendMessages();
 
     void tryStopSend();
+
+signals:
+    void sendMessage(int row);
 
 private:
     Ui::NetworkAssistWindow *ui;
     bool isASCII { false };
     bool isSendAndReceive {false};
+    bool isCycleSend {false};
     bool isSending { true };
+    bool isPass { true };
     QMap<int, QByteArray> recvDataMap;
     QMap<int, QPair<int, QTimer*>> recvTimerMap;
+    QMap<int, QTimer*> cycleTimerMap;
 };
 
 #endif // NETWORKHELPER_H
