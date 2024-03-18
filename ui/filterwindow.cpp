@@ -29,34 +29,10 @@ void FilterWindow::initWindow()
     const auto& filter = figkey::CaptureConfig::Instance().getConfigInfo().filter;
 
     table->setColumnCount(2);
-    table->setRowCount(9);
+    table->setRowCount(11);
     table->setHorizontalHeaderLabels(QStringList() << "name" << "value");
 
-    table->setItem(0, 0, new QTableWidgetItem("Source IP"));
-    if (!filter.srcIP.empty())
-        table->setItem(0, 1, new QTableWidgetItem(QString::fromStdString(filter.srcIP)));
-
-    table->setItem(1, 0, new QTableWidgetItem("Destination IP"));
-    if (!filter.destIP.empty())
-        table->setItem(1, 1, new QTableWidgetItem(QString::fromStdString(filter.destIP)));
-
-    table->setItem(2, 0, new QTableWidgetItem("Source MAC"));
-    if (!filter.srcMAC.empty())
-        table->setItem(2, 1, new QTableWidgetItem(QString::fromStdString(filter.srcMAC)));
-
-    table->setItem(3, 0, new QTableWidgetItem("Destination MAC"));
-    if (!filter.destMAC.empty())
-        table->setItem(3, 1, new QTableWidgetItem(QString::fromStdString(filter.destMAC)));
-
-    table->setItem(4, 0, new QTableWidgetItem("Source Port"));
-    if (0 != filter.srcPort)
-        table->setItem(4, 1, new QTableWidgetItem(QString::number(filter.srcPort)));
-
-    table->setItem(5, 0, new QTableWidgetItem("Destination Port"));
-    if (0 != filter.destPort)
-        table->setItem(5, 1, new QTableWidgetItem(QString::number(filter.destPort)));
-
-    table->setItem(6, 0, new QTableWidgetItem("Protocol Type"));
+    table->setItem(0, 0, new QTableWidgetItem("Protocol Type"));
     QComboBox* comboBox = new QComboBox();
     comboBox->addItems(QStringList() << "DEFAULT" << "TCP" << "UDP" << "DOIP" << "UDS");
     switch(filter.protocolType) {
@@ -75,17 +51,50 @@ void FilterWindow::initWindow()
     default:
         comboBox->setCurrentText("DEFAULT");
     }
-    table->setCellWidget(6, 1, comboBox);
+    table->setCellWidget(0, 1, comboBox);
 
-    table->setItem(7, 0, new QTableWidgetItem("Min Payload Length"));
+    table->setItem(1, 0, new QTableWidgetItem("IP"));
+    if (!filter.ip.empty())
+        table->setItem(1, 1, new QTableWidgetItem(QString::fromStdString(filter.ip)));
+
+    table->setItem(2, 0, new QTableWidgetItem("Port"));
+    if (0 != filter.port)
+        table->setItem(2, 1, new QTableWidgetItem(QString::number(filter.port)));
+
+    table->setItem(3, 0, new QTableWidgetItem("Source IP"));
+    if (!filter.srcIP.empty())
+        table->setItem(3, 1, new QTableWidgetItem(QString::fromStdString(filter.srcIP)));
+
+    table->setItem(4, 0, new QTableWidgetItem("Destination IP"));
+    if (!filter.destIP.empty())
+        table->setItem(4, 1, new QTableWidgetItem(QString::fromStdString(filter.destIP)));
+
+    table->setItem(5, 0, new QTableWidgetItem("Source MAC"));
+    if (!filter.srcMAC.empty())
+        table->setItem(5, 1, new QTableWidgetItem(QString::fromStdString(filter.srcMAC)));
+
+    table->setItem(6, 0, new QTableWidgetItem("Destination MAC"));
+    if (!filter.destMAC.empty())
+        table->setItem(6, 1, new QTableWidgetItem(QString::fromStdString(filter.destMAC)));
+
+    table->setItem(7, 0, new QTableWidgetItem("Source Port"));
+    if (0 != filter.srcPort)
+        table->setItem(7, 1, new QTableWidgetItem(QString::number(filter.srcPort)));
+
+    table->setItem(8, 0, new QTableWidgetItem("Destination Port"));
+    if (0 != filter.destPort)
+        table->setItem(8, 1, new QTableWidgetItem(QString::number(filter.destPort)));
+
+    table->setItem(9, 0, new QTableWidgetItem("Min Payload Length"));
     if (0 != filter.minLen)
-        table->setItem(7, 1, new QTableWidgetItem(QString::number(filter.minLen)));
+        table->setItem(9, 1, new QTableWidgetItem(QString::number(filter.minLen)));
 
-    table->setItem(8, 0, new QTableWidgetItem("Max payload Length"));
+    table->setItem(10, 0, new QTableWidgetItem("Max payload Length"));
     if (0 != filter.maxLen)
-        table->setItem(8, 1, new QTableWidgetItem(QString::number(filter.maxLen)));
+        table->setItem(10, 1, new QTableWidgetItem(QString::number(filter.maxLen)));
 
-    table->resizeColumnsToContents(); // 自适应列宽
+    table->setColumnWidth(0, 145);
+    table->setColumnWidth(1, 250);
 }
 
 bool isValidIpAddress(const QString& ip) {
@@ -128,67 +137,7 @@ void FilterWindow::on_pushButton_clicked()
 
         figkey::FilterInfo filter;
 
-        auto srcIPItem = table->item(0, 1);
-        if (srcIPItem && !srcIPItem->text().isEmpty()) {
-            if(!isValidIpAddress(srcIPItem->text())) {
-                QMessageBox::warning(this, "Error", "Invalid source IP address.");
-                return;
-            } else {
-                filter.srcIP = srcIPItem->text().toStdString();
-            }
-        }
-
-        auto destIPItem = table->item(1, 1);
-        if (destIPItem && !destIPItem->text().isEmpty()) {
-            if(!isValidIpAddress(destIPItem->text())) {
-                QMessageBox::warning(this, "Error", "Invalid destination IP address.");
-                return;
-            } else {
-                filter.destIP = destIPItem->text().toStdString();
-            }
-        }
-
-        auto srcMACItem = table->item(2, 1);
-        if (srcMACItem && !srcMACItem->text().isEmpty()) {
-            if(!isValidMacAddress(srcMACItem->text())) {
-                QMessageBox::warning(this, "Error", "Invalid source MAC address.");
-                return;
-            } else {
-                filter.srcMAC = srcMACItem->text().toStdString();
-            }
-        }
-
-        auto destMACItem = table->item(3, 1);
-        if (destMACItem && !destMACItem->text().isEmpty()) {
-            if(!isValidMacAddress(destMACItem->text())) {
-                QMessageBox::warning(this, "Error", "Invalid destination MAC address.");
-                return;
-            } else {
-                filter.destMAC = destMACItem->text().toStdString();
-            }
-        }
-
-        auto srcPortItem = table->item(4, 1);
-        if (srcPortItem && !srcPortItem->text().isEmpty()) {
-            if(!isValidPort(srcPortItem->text())) {
-                QMessageBox::warning(this, "Error", "Invalid source port.");
-                return;
-            } else {
-                filter.srcPort = static_cast<uint16_t>(srcPortItem->text().toUShort());
-            }
-        }
-
-        auto destPortItem = table->item(5, 1);
-        if (destPortItem && !destPortItem->text().isEmpty()) {
-            if(!isValidPort(destPortItem->text())) {
-                QMessageBox::warning(this, "Error", "Invalid destination port.");
-                return;
-            } else {
-                filter.destPort = static_cast<uint16_t>(destPortItem->text().toUShort());
-            }
-        }
-
-        QComboBox *comboBox = qobject_cast<QComboBox*>(table->cellWidget(6, 1));
+        QComboBox *comboBox = qobject_cast<QComboBox*>(table->cellWidget(0, 1));
         QString protocolType = comboBox->currentText();
         if (protocolType == "DEFAULT") {
             filter.protocolType = figkey::PROTOCOL_TYPE_DEFAULT;
@@ -202,7 +151,99 @@ void FilterWindow::on_pushButton_clicked()
             filter.protocolType = figkey::PROTOCOL_TYPE_UDS;
         }
 
-        auto minLenItem = table->item(7, 1);
+        auto ipItem = table->item(1, 1);
+        if (ipItem && !ipItem->text().isEmpty()) {
+            if(!isValidIpAddress(ipItem->text())) {
+                QMessageBox::warning(this, "Error", "Invalid IP address.");
+                return;
+            } else {
+                filter.ip = ipItem->text().toStdString();
+            }
+        }
+
+        auto portItem = table->item(2, 1);
+        if (portItem && !portItem->text().isEmpty()) {
+            if(!isValidPort(portItem->text())) {
+                QMessageBox::warning(this, "Error", "Invalid port.");
+                return;
+            } else {
+                filter.port = static_cast<uint16_t>(portItem->text().toUShort());
+            }
+        }
+
+        auto srcIPItem = table->item(3, 1);
+        if (srcIPItem && !srcIPItem->text().isEmpty()) {
+            if(!isValidIpAddress(srcIPItem->text())) {
+                QMessageBox::warning(this, "Error", "Invalid source IP address.");
+                return;
+            } else if (!filter.ip.empty()) {
+                QMessageBox::warning(this, "Error", "The IP address has been specified and the source IP cannot be specified.");
+                return;
+            } else {
+                filter.srcIP = srcIPItem->text().toStdString();
+            }
+        }
+
+        auto destIPItem = table->item(4, 1);
+        if (destIPItem && !destIPItem->text().isEmpty()) {
+            if(!isValidIpAddress(destIPItem->text())) {
+                QMessageBox::warning(this, "Error", "Invalid destination IP address.");
+                return;
+            } else if (!filter.ip.empty()) {
+                QMessageBox::warning(this, "Error", "The IP address has been specified and the destination IP cannot be specified.");
+                return;
+            } else {
+                filter.destIP = destIPItem->text().toStdString();
+            }
+        }
+
+        auto srcMACItem = table->item(5, 1);
+        if (srcMACItem && !srcMACItem->text().isEmpty()) {
+            if(!isValidMacAddress(srcMACItem->text())) {
+                QMessageBox::warning(this, "Error", "Invalid source MAC address.");
+                return;
+            } else {
+                filter.srcMAC = srcMACItem->text().toStdString();
+            }
+        }
+
+        auto destMACItem = table->item(6, 1);
+        if (destMACItem && !destMACItem->text().isEmpty()) {
+            if(!isValidMacAddress(destMACItem->text())) {
+                QMessageBox::warning(this, "Error", "Invalid destination MAC address.");
+                return;
+            } else {
+                filter.destMAC = destMACItem->text().toStdString();
+            }
+        }
+
+        auto srcPortItem = table->item(7, 1);
+        if (srcPortItem && !srcPortItem->text().isEmpty()) {
+            if(!isValidPort(srcPortItem->text())) {
+                QMessageBox::warning(this, "Error", "Invalid source port.");
+                return;
+            } else if (0 != filter.port) {
+                QMessageBox::warning(this, "Error", "The IP port has been specified and the source IP port cannot be specified.");
+                return;
+            } else {
+                filter.srcPort = static_cast<uint16_t>(srcPortItem->text().toUShort());
+            }
+        }
+
+        auto destPortItem = table->item(8, 1);
+        if (destPortItem && !destPortItem->text().isEmpty()) {
+            if(!isValidPort(destPortItem->text())) {
+                QMessageBox::warning(this, "Error", "Invalid destination port.");
+                return;
+            } else if (0 != filter.port) {
+                QMessageBox::warning(this, "Error", "The IP port has been specified and the destination IP port cannot be specified.");
+                return;
+            } else {
+                filter.destPort = static_cast<uint16_t>(destPortItem->text().toUShort());
+            }
+        }
+
+        auto minLenItem = table->item(9, 1);
         if (minLenItem && !minLenItem ->text().isEmpty()) {
             if(!isValidPayloadLength(minLenItem ->text())) {
                 QMessageBox::warning(this, "Error", "Invalid minimum payload length.");
@@ -212,7 +253,7 @@ void FilterWindow::on_pushButton_clicked()
             }
         }
 
-        auto maxLenItem = table->item(8, 1);
+        auto maxLenItem = table->item(10, 1);
         if (maxLenItem && !maxLenItem->text().isEmpty()) {
             if(!isValidPayloadLength(maxLenItem->text())) {
                 QMessageBox::warning(this, "Error", "Invalid maximum payload length.");

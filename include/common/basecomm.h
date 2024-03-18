@@ -27,7 +27,7 @@ public:
     virtual bool sendData(const QByteArray &data) = 0;
     virtual void stop() = 0;
 
-    QString getLastError() const;  // 新增的获取最近错误信息的接口
+    QString getLastError() const;
 
 signals:
     void dataReceived(const QByteArray& data);
@@ -37,7 +37,7 @@ protected:
     QString m_serverIp;
     int m_serverPort;
     bool m_isServer;
-    QString m_lastError;  // 新增的保存最近一次错误信息的成员变量
+    QString m_lastError;
 };
 
 #endif // !QT_BASE_COMMON_H

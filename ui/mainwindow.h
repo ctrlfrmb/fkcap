@@ -8,7 +8,6 @@
 #include "sqlite.h"
 #include "packeinfo.h"
 #include "networkassistwindow.h"
-#include "doipclientwindow.h"
 
 namespace Ui {
 class MainWindow;
@@ -39,8 +38,6 @@ private slots:
 
     void on_actionFilter_Clear_triggered();
 
-    void on_actionDoIP_Client_triggered();
-
     void on_actionOpen_triggered();
 
     void on_actionSave_triggered();
@@ -63,6 +60,10 @@ private slots:
 
     void on_actionSave_Server_Test_triggered();
 
+    void on_actionSimulation_Client_triggered();
+
+    void on_actionSimulation_Server_triggered();
+
 private:
     void initTableView();
     void initTreeView();
@@ -79,7 +80,6 @@ private:
 
     NetworkAssistWindow client;
     NetworkAssistWindow server;
-    DoIPClientWindow doipClient;
 
     QMutex mutexPacket;
     uint64_t packetCounter{ 0 };

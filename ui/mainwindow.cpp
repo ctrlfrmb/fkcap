@@ -124,9 +124,7 @@ void MainWindow::exitWindow() {
     if (server.isVisible()) {
         server.close();
     }
-    if (doipClient.isVisible()) {
-        doipClient.close();
-    }
+
     if(timerUpdateUI)
         timerUpdateUI->stop();
     db.closeFile();
@@ -185,11 +183,14 @@ void MainWindow::updateUI() {
 }
 
 void MainWindow::onTableViewDoubleClicked(const QModelIndex& index) {
-    if (index.column() == 6) {  // 如果是最后一列
-        QString text = index.data().toString();  // 获取该项的文本
-
+    if (index.column() == 6) {
+        auto info = pim->getPacketByIndex(index.row());
+        if (client.isVisible() && !server.isVisible())
+            client.addRow(info);
+        else if (server.isVisible() && !client.isVisible())
+            server.addRow(info);
         QClipboard *clipboard = QApplication::clipboard();
-        clipboard->setText(text);
+        clipboard->setText(info.data.c_str());
     }
 }
 
@@ -292,13 +293,6 @@ void MainWindow::on_actionFilter_Clear_triggered()
     figkey::CaptureConfig::Instance().setFilter(filter);
 
     pauseCapture();
-}
-
-void MainWindow::on_actionDoIP_Client_triggered()
-{
-    if (!doipClient.isVisible()) {
-        doipClient.show();
-    }
 }
 
 void MainWindow::on_actionOpen_triggered()
@@ -430,4 +424,30 @@ void MainWindow::on_actionSave_Test_triggered()
 void MainWindow::on_actionSave_Server_Test_triggered()
 {
     server.saveConfigToFile();
+}
+
+void MainWindow::on_actionSimulation_Client_triggered()
+{
+    auto packets = pim->getAllPacket();
+    if (packets.empty())
+        return;
+    client.setSimulation(packets[0]);
+    for (const auto& packet : packets) {
+        client.addRow(packet);
+    }
+
+    client.show();
+}
+
+void MainWindow::on_actionSimulation_Server_triggered()
+{
+    auto packets = pim->getAllPacket();
+    if (packets.empty())
+        return;
+    server.setSimulation(packets[0]);
+    for (const auto& packet : packets) {
+        server.addRow(packet);
+    }
+
+    server.show();
 }

@@ -23,12 +23,22 @@ namespace figkey {
     }
 
     bool IPPacketParse::checkFilterInfo(const PacketInfo& packet, const FilterInfo& filter) {
-        if (!filter.srcIP.empty() && filter.srcIP != packet.srcIP) return false;
-        if (!filter.destIP.empty() && filter.destIP != packet.destIP) return false;
+        if (!filter.ip.empty()) {
+            if (filter.ip != packet.srcIP && filter.ip != packet.destIP) return false;
+        }
+        else {
+            if (!filter.srcIP.empty() && filter.srcIP != packet.srcIP) return false;
+            if (!filter.destIP.empty() && filter.destIP != packet.destIP) return false;
+        }
         if (!filter.srcMAC.empty() && filter.srcMAC != packet.srcMAC) return false;
         if (!filter.destMAC.empty() && filter.destMAC != packet.destMAC) return false;
-        if (filter.srcPort != 0 && filter.srcPort != packet.srcPort) return false;
-        if (filter.destPort != 0 && filter.destPort != packet.destPort) return false;
+        if (0 != filter.port) {
+            if (filter.port != packet.srcPort && filter.port != packet.destPort) return false;
+        }
+        else {
+            if (filter.srcPort != 0 && filter.srcPort != packet.srcPort) return false;
+            if (filter.destPort != 0 && filter.destPort != packet.destPort) return false;
+        }
 
         // 当滤波器的 minLen 不为零时做最小长度过滤
         if (filter.minLen != 0) {

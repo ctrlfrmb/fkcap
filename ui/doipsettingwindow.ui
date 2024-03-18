@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>FilterWindow</class>
- <widget class="QDialog" name="FilterWindow">
+ <class>DoIPSettingWindow</class>
+ <widget class="QDialog" name="DoIPSettingWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,25 +11,12 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Capture Filter Setting</string>
+   <string>DoIP Setting</string>
   </property>
   <property name="windowIcon">
    <iconset resource="../resource.qrc">
-    <normaloff>:/images/resource/icons/capture_filter.png</normaloff>:/images/resource/icons/capture_filter.png</iconset>
+    <normaloff>:/images/resource/icons/doip_setting.png</normaloff>:/images/resource/icons/doip_setting.png</iconset>
   </property>
-  <property name="modal">
-   <bool>true</bool>
-  </property>
-  <widget class="QTableWidget" name="tableWidget">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>10</y>
-     <width>451</width>
-     <height>311</height>
-    </rect>
-   </property>
-  </widget>
   <widget class="QPushButton" name="pushButton">
    <property name="geometry">
     <rect>
@@ -41,6 +28,16 @@
    </property>
    <property name="text">
     <string>OK</string>
+   </property>
+  </widget>
+  <widget class="QTableWidget" name="tableWidget">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>451</width>
+     <height>311</height>
+    </rect>
    </property>
   </widget>
  </widget>

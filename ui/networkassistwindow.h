@@ -25,6 +25,9 @@ public:
     static bool isServerByLoadFile(const QString& fileName, bool& hasServer);
     bool loadConfigFromFile(const QString& fileName);
     void set(figkey::PacketInfo packet);
+    void setSimulation(figkey::PacketInfo packet);
+    void setMessageType(int type);
+    void addRow(const figkey::PacketInfo& packet);
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -44,13 +47,17 @@ private slots:
 
     void onDataReceived(const QByteArray& data);
 
+    void on_buttonDoIPSet_clicked();
+
 private:
     void closeComm();
     void isSaveFile();
     void initWindow();
     void exitWindow();
+    void autoTest();
 
     void setProtocol(uint8_t protocol, QComboBox* comboBox);
+    bool isLocalIP(const std::string& ip);
     void setClientIP(QComboBox* comboBox, const figkey::PacketInfo& packet);
     void setServerIP(QComboBox* comboBox, const figkey::PacketInfo& packet);
     void setServerPort(QComboBox* comboBox, const figkey::PacketInfo& packet);
@@ -67,6 +74,7 @@ private:
     BaseComm *comm { nullptr };
 
     bool isServer { false };
+    bool isRouteActivation { false };
     bool canSaveFile { false };
 };
 

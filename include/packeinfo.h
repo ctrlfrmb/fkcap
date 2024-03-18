@@ -25,6 +25,8 @@ public:
     void clearPacket();
     figkey::PacketInfo getPacketByIndex(int index);
 
+    const QVector<figkey::PacketInfo>& getAllPacket() const;
+
 private:
     QString getProtocolName(uint8_t protocolType) const;
 

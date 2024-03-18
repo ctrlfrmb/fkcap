@@ -17,5 +17,9 @@
         <file>resource/icons/client_test.png</file>
         <file>resource/icons/open_test.png</file>
         <file>resource/icons/server_test.png</file>
+        <file>resource/icons/simulation_client.png</file>
+        <file>resource/icons/simulation_server.png</file>
+        <file>resource/icons/doip_setting.png</file>
     </qresource>
+    <qresource prefix="/"/>
 </RCC>

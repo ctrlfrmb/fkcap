@@ -62,6 +62,26 @@ QByteArray NetworkHelper::getSendData(int row) {
     return dataToSend;
 }
 
+QByteArray NetworkHelper::getDataFromString(const std::string& str) {
+    QString dataString(str.c_str());
+    QByteArray dataToSend;
+
+    if (isASCII) {
+        dataToSend = dataString.toLatin1();
+    } else {
+        QStringList byteStrings = dataString.split(' ', QString::SkipEmptyParts);
+        for (const QString &byteString : byteStrings) {
+            bool ok;
+            int byteInt = byteString.toInt(&ok, 16); // Assume the data String is in hexadecimal
+            if (ok) {
+                dataToSend.append(static_cast<char>(byteInt));
+            }
+        }
+    }
+
+    return dataToSend;
+}
+
 void NetworkHelper::addSettingItem(bool isEdit, const QString& label, const QStringList& options) {
     QListWidgetItem* item = new QListWidgetItem(ui->listSetting);
 
@@ -73,7 +93,16 @@ void NetworkHelper::addSettingItem(bool isEdit, const QString& label, const QStr
     comboBox->addItems(options);
     comboBox->setEditable(isEdit);  // Allow user input
 
-    if (label == SET_DATA_TYPE_LABEL)
+    if (label == SET_DOIP_TEST_LABEL)
+    {
+        // Connect the signal that fires when the ComboBox selection changes.
+        connect(comboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            [=](int index) {
+                // Update flag based on the selection.
+                this->ui->buttonDoIPSet->setEnabled(index == 1);
+        });
+    }
+    else if (label == SET_DATA_TYPE_LABEL)
     {
         // Connect the signal that fires when the ComboBox selection changes.
         connect(comboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -105,6 +134,8 @@ void NetworkHelper::addSettingItem(bool isEdit, const QString& label, const QStr
 void NetworkHelper::initListSetting() {
     // Create QListWidgetItem and corresponding custom QWidget for each setting.
     addSettingItem(false, SET_PROTOCOL_LABEL, {"TCP", "UDP"});
+    addSettingItem(false, SET_DOIP_TEST_LABEL,  {"False", "True"});
+
     QStringList clientIps;
     auto address = figkey::CaptureConfig::Instance().getConfigInfo().network.address;
     for (const auto& addr : address) {
@@ -113,8 +144,10 @@ void NetworkHelper::initListSetting() {
     addSettingItem(true, SET_CLIENT_IP_LABEL, clientIps);
     addSettingItem(true, SET_SERVER_IP_LABEL, {"192.168.1.1"});
     addSettingItem(true, SET_SERVER_PORT_LABEL, {"13400"});
+
     addSettingItem(false, SET_DATA_TYPE_LABEL, {"HEX", "ASCII"});
     addSettingItem(false, SET_ERROR_PROCESS_LABEL, {"PASS", "STOP"});
+    addSettingItem(false, SET_JSON_TEST_LABEL, {"Auto", "Manual"});
 }
 
 bool NetworkHelper::isLooped(int start) {
@@ -140,6 +173,7 @@ bool NetworkHelper::isLooped(int start) {
 }
 
 void NetworkHelper::initTableSend() {
+    ui->tableSend->clear();
     // Set the number of columns
     ui->tableSend->setColumnCount(6);
 
@@ -534,7 +568,7 @@ QList<int> NetworkHelper::checkReceiveDataMap(const QString& timeStamp, const QB
             ui->tableSend->setItem(it.key(), 1, new QTableWidgetItem(timeStamp));
             if (isSendAndReceive) {
                 removeReceiveTimer(it.key());
-                return getContinuousSendMessages(it.key());
+                return getContinuousSendMessages(it.key(), false);
             }
             return {};
         }
@@ -559,11 +593,11 @@ int NetworkHelper::getCheckedTableSend() {
     return -1;
 }
 
-QList<int> NetworkHelper::getContinuousSendMessages(int start) {
+QList<int> NetworkHelper::getContinuousSendMessages(int start, bool isSend) {
     QList<int> sendList;
     int currentRow = start;
     int nexRow = -1;
-    if (0 != currentRow) {
+    if (!isSend) {
         currentRow = getNextRow(start);
     }
 

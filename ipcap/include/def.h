@@ -102,13 +102,15 @@ namespace figkey {
 
     // Structure for setting filter capture information
     struct FilterInfo {
+        uint8_t protocolType{0};            // 协议类型，使用枚举类表示
+        std::string ip{""};                 // IP
+        uint16_t port{0};                   // 端口
         std::string srcIP{""};              // 源IP
         std::string destIP{""};             // 目标IP
         std::string srcMAC{""};             // 源MAC
         std::string destMAC{""};            // 目标MAC
         uint16_t srcPort{0};                // 源端口
         uint16_t destPort{0};               // 目标端口
-        uint8_t protocolType{0};            // 协议类型，使用枚举类表示
         uint16_t minLen{0};                 // 负载长度
         uint16_t maxLen{0};                 // 负载长度
     };

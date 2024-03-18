@@ -1,6 +1,111 @@
-#include "doip/diagnosticmessagehandler.h"
 #include <iostream>
 #include <cstring>
+
+#include "doip/diagnosticmessagehandler.h"
+#include "doip/doipclientconfig.h"
+/*
+ *Build the Routing-Activation-Request for server
+ */
+QByteArray buildRoutingActivationRequest() {
+    QByteArray array;
+    array.resize(15);  // Initialize the QByteArray with total size
+
+    // Get configuration
+    auto& config = figkey::DoIPClientConfig::Instance();
+    auto ver = config.getVersion();
+
+    //Generic Header
+    array[0]=  (ver & 0x000000FF);  //Protocol Version
+    array[1]= ~(ver & 0x000000FF);  //Inverse Protocol Version
+    array[2]=0x00;  //Payload-Type
+    array[3]=0x05;
+
+    //Payload-Type specific message-content
+    auto sourceAddress = config.getSourceAddress();
+    array[8]  = (sourceAddress >> 8) & 0xFF; //Source Address
+    array[9]  = sourceAddress & 0xFF;
+    array[10] = config.getActiveType();
+    // Reserved ISO (default)
+    auto future = config.getFutureStandardization();
+    if (future.size() == DOIP_ROUTE_ACTIVATION_RESERVED_ISO13400_LENGTH) {
+        array.replace(11, 4, future);
+    }
+    else {
+        array[14] = array[13] = array[12] = array[11] = 0x00;
+    }
+    if (config.getUseOEMSpecific()) {
+        auto opt = config.getAdditionalOEMSpecific();
+        if (opt.size() != DOIP_ROUTE_ACTIVATION_RESERVED_OEM_LENGTH) {
+            std::cerr << "doip client config additional oem specific invalid, size" << opt.size() << std::endl;
+        } else {
+            array.append(opt);
+        }
+    }
+
+    // Set Payload-Length
+    auto payloadLength = array.size() - _GenericHeaderLength; // Subtracting 8 bytes of header
+    array[4] = (payloadLength >> 24) & 0xFF;   // Payload-Length
+    array[5] = (payloadLength >> 16) & 0xFF;
+    array[6] = (payloadLength >> 8) & 0xFF;
+    array[7] = payloadLength & 0xFF;
+
+    return array;
+}
+
+/*
+ *Build the Routing-Activation-Response for server
+ */
+QByteArray buildRoutingActivationResponse() {
+    QByteArray array;
+    array.resize(17);  // Initialize the QByteArray with total size
+
+    // Get configuration
+    auto& config = figkey::DoIPClientConfig::Instance();
+    auto ver = config.getVersion();
+
+    //Generic Header
+    array[0]=  (ver & 0x000000FF);  //Protocol Version
+    array[1]= ~(ver & 0x000000FF);  //Inverse Protocol Version
+    array[2]=0x00;  //Payload-Type
+    array[3]=0x06;
+
+    // Add source address to the message
+    auto sourceAddress = config.getSourceAddress();
+    array[8] = (unsigned char)((sourceAddress >> 8) & 0xFF);
+    array[9] = (unsigned char)(sourceAddress & 0xFF);
+
+    // Add target address to the message
+    auto targetAddress = config.getTargetAddress();
+    array[10] = (unsigned char)((targetAddress >> 8) & 0xFF);
+    array[11] = (unsigned char)(targetAddress & 0xFF);
+
+    // Routing activation response code
+    array[12] = DOIP_ROUTING_SUCCESSFULLY_ACTIVATED;
+    auto future = config.getFutureStandardization();
+    if (future.size() == DOIP_ROUTE_ACTIVATION_RESERVED_ISO13400_LENGTH) {
+        array.replace(13, 4, future);
+    }
+    else {
+        array[16] = array[15] = array[14] = array[13] = 0x00;
+    }
+    if (config.getUseOEMSpecific()) {
+        auto opt = config.getAdditionalOEMSpecific();
+        if (opt.size() != DOIP_ROUTE_ACTIVATION_RESERVED_OEM_LENGTH) {
+            std::cerr << "doip client config additional oem specific invalid, size" << opt.size() << std::endl;
+        } else {
+            array.append(opt);
+        }
+    }
+
+    // Set Payload-Length
+    auto payloadLength = array.size() - _GenericHeaderLength; // Subtracting 8 bytes of header
+    array[4] = (payloadLength >> 24) & 0xFF;   // Payload-Length
+    array[5] = (payloadLength >> 16) & 0xFF;
+    array[6] = (payloadLength >> 8) & 0xFF;
+    array[7] = payloadLength & 0xFF;
+
+    return array;
+}
 
 /**
  * Checks if a received Diagnostic Message is valid
@@ -48,26 +153,24 @@ unsigned char parseDiagnosticMessage(DiagnosticCallback callback, unsigned char 
  * @param responseCode		positive or negative acknowledge code
  * @return pointer to the created diagnostic message acknowledge
  */
-std::vector<uint8_t> createDiagnosticACK(bool ackType, unsigned short sourceAddress,
-                                   short targetAddress, unsigned char responseCode) {
-    
-    PayloadType type;
-    if(ackType)
-        type = PayloadType::DIAGNOSTICPOSITIVEACK;
-    else
-        type = PayloadType::DIAGNOSTICNEGATIVEACK;
-    
+QByteArray createDiagnosticACK(bool ackType, unsigned char responseCode) {
+
+    PayloadType type = ackType ? PayloadType::DIAGNOSTICPOSITIVEACK : PayloadType::DIAGNOSTICNEGATIVEACK;
+
     auto message = createGenericHeader(type, _DiagnosticPositiveACKLength);
 
-    //add source address to the message
+    // Add source address to the message
+    auto& config = figkey::DoIPClientConfig::Instance();
+    auto sourceAddress = config.getSourceAddress();
     message[8] = (unsigned char)((sourceAddress >> 8) & 0xFF);
     message[9] = (unsigned char)(sourceAddress & 0xFF);
 
-    //add target address to the message
+    // Add target address to the message
+    auto targetAddress = config.getTargetAddress();
     message[10] = (unsigned char)((targetAddress >> 8) & 0xFF);
     message[11] = (unsigned char)(targetAddress & 0xFF);
 
-    //add positive or negative acknowledge code to the message
+    // Add positive or negative acknowledge code to the message
     message[12] = responseCode;
 
     return message;
@@ -80,21 +183,23 @@ std::vector<uint8_t> createDiagnosticACK(bool ackType, unsigned short sourceAddr
  * @param userData		actual diagnostic data
  * @param userDataLength	length of diagnostic data
  */
-std::vector<uint8_t> createDiagnosticMessage(unsigned short sourceAddress, unsigned short targetAddress, const std::vector<uint8_t>& uds) {
+QByteArray createDiagnosticMessage(const QByteArray& uds) {
     auto message = createGenericHeader(PayloadType::DIAGNOSTICMESSAGE, _DiagnosticMessageMinimumLength + uds.size());
 
-    //add source address to the message
+    auto& config = figkey::DoIPClientConfig::Instance();
+    auto sourceAddress = config.getSourceAddress();
+    // Add source address to the message
     message[8] = (unsigned char)((sourceAddress >> 8) & 0xFF);
     message[9] = (unsigned char)(sourceAddress & 0xFF);
 
-    //add target address to the message
+    // Add target address to the message
+    auto targetAddress = config.getTargetAddress();
     message[10] = (unsigned char)((targetAddress >> 8) & 0xFF);
     message[11] = (unsigned char)(targetAddress & 0xFF);
 
-    //add userdata to the message
-    for(size_t i = 0; i < uds.size(); i++) {
-        message[12 + i] = uds[i];
-    }
+    // Add userdata to the message
+    message.append(uds);
 
     return message;
 }
+

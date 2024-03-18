@@ -2,7 +2,11 @@
 #define DOIPGENERICHEADERHANDLER_H
 
 #include <stdint.h>
-#include <vector>
+#include <QByteArray>
+
+#define DOIP_ROUTING_SUCCESSFULLY_ACTIVATED 0x10
+#define DOIP_ROUTE_ACTIVATION_RESERVED_ISO13400_LENGTH 4
+#define DOIP_ROUTE_ACTIVATION_RESERVED_OEM_LENGTH 4
 
 const int _GenericHeaderLength = 8;
 const int _NACKLength = 1;
@@ -30,7 +34,7 @@ struct GenericHeaderAction {
 };
 
 GenericHeaderAction parseGenericHeader(unsigned char* data, int dataLenght);
-std::vector<uint8_t> createGenericHeader(PayloadType type, size_t length);
+QByteArray createGenericHeader(PayloadType type, int length);
 
 
 #endif /* DOIPGENERICHEADERHANDLER_H */

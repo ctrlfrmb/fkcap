@@ -34,10 +34,10 @@ SOURCES += main.cpp\
     src/doip/doipclient.cpp \
     src/doip/diagnosticmessagehandler.cpp \
     src/doip/doipgenericheaderhandler.cpp \
+    ui/doipsettingwindow.cpp \
     ui/mainwindow.cpp \
     ui/devicewindow.cpp \
     ui/filterwindow.cpp \
-    ui/doipclientwindow.cpp \
     ui/networkassistwindow.cpp \
     ui/networkhelper.cpp
 
@@ -80,15 +80,16 @@ HEADERS  += include/common/basecomm.h \
     include/doip/doipclient.h \
     include/doip/diagnosticmessagehandler.h \
     include/doip/doipgenericheaderhandler.h \
+    ui/doipsettingwindow.h \
     ui/mainwindow.h \
     ui/devicewindow.h \
     ui/filterwindow.h \
-    ui/doipclientwindow.h \
     ui/networkassistwindow.h \
     ui/networkhelper.h
 
 FORMS    += ui/mainwindow.ui \
     ui/devicewindow.ui \
+    ui/doipsettingwindow.ui \
     ui/filterwindow.ui \
     ui/doipclientwindow.ui \
     ui/networkassistwindow.ui

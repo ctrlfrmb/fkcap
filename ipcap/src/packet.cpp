@@ -59,7 +59,12 @@ namespace figkey {
         for (const auto& d : data)
             ss << std::setw(2) << static_cast<unsigned>(d) << " ";
 
-        return ss.str();
+        std::string result = ss.str();
+        // Remove the last space
+        if (!result.empty())
+            result.pop_back();
+
+        return result;
     }
 
     static std::string convertMacToString(const uint8_t mac[6]){

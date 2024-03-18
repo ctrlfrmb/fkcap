@@ -1,8 +1,9 @@
-#include "doip/doipgenericheaderhandler.h"
 #include <iostream>
 #include <iomanip>
+#include "doip/doipgenericheaderhandler.h"
+#include "doip/doipclientconfig.h"
 
-using namespace std;
+//using namespace std;
 
 /**
  * Checks if the received Generic Header is valid
@@ -141,17 +142,24 @@ GenericHeaderAction parseGenericHeader(unsigned char* data, int dataLenght) {
  * @param length    length of the payload type specific message
  * @return          header array
  */
-std::vector<uint8_t> createGenericHeader(PayloadType type, size_t length) {
-    std::vector<uint8_t> header(8 + length, 0);
-    header[0] = 0x02;
-    header[1] = 0xFD;
+QByteArray createGenericHeader(PayloadType type, int length) {
+    QByteArray header; header.resize(8);
+
+    // Get configuration
+    auto& config = figkey::DoIPClientConfig::Instance();
+    auto ver = config.getVersion();
+
+    //Generic Header
+    header[0]=  (ver & 0x000000FF);  //Protocol Version
+    header[1]= ~(ver & 0x000000FF);  //Inverse Protocol Version
+
     switch(type) {
         case PayloadType::ROUTINGACTIVATIONRESPONSE: {
             header[2] = 0x00;
             header[3] = 0x06;
             break;
         }
-			
+
         case PayloadType::NEGATIVEACK: {
             header[2] = 0x00;
             header[3] = 0x00;
@@ -181,7 +189,7 @@ std::vector<uint8_t> createGenericHeader(PayloadType type, size_t length) {
             header[3] = 0x03;
             break;
         }
-        
+
         case PayloadType::ALIVECHECKRESPONSE: {
             header[2] = 0x00;
             header[3] = 0x08;
@@ -193,11 +201,11 @@ std::vector<uint8_t> createGenericHeader(PayloadType type, size_t length) {
             break;
         }
     }
-    
+
     header[4] = (length >> 24) & 0xFF;
     header[5] = (length >> 16) & 0xFF;
     header[6] = (length >> 8) & 0xFF;
     header[7] = length & 0xFF;
-    
+
     return header;
 }

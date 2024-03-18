@@ -99,6 +99,9 @@
     <addaction name="actionServer"/>
     <addaction name="actionDoIP_Client"/>
     <addaction name="actionDoIP_Server"/>
+    <addaction name="separator"/>
+    <addaction name="actionSimulation_Client"/>
+    <addaction name="actionSimulation_Server"/>
    </widget>
    <addaction name="menuDdd"/>
    <addaction name="menuView"/>
@@ -141,6 +144,8 @@
    <addaction name="separator"/>
    <addaction name="actionClient"/>
    <addaction name="actionServer"/>
+   <addaction name="actionSimulation_Client"/>
+   <addaction name="actionSimulation_Server"/>
    <addaction name="separator"/>
    <addaction name="actionDoIP_Client"/>
    <addaction name="actionDoIP_Server"/>
@@ -321,6 +326,24 @@
    </property>
    <property name="toolTip">
     <string>Save  server test data to json file</string>
+   </property>
+  </action>
+  <action name="actionSimulation_Client">
+   <property name="icon">
+    <iconset resource="../resource.qrc">
+     <normaloff>:/images/resource/icons/simulation_client.png</normaloff>:/images/resource/icons/simulation_client.png</iconset>
+   </property>
+   <property name="text">
+    <string>Simulation Client</string>
+   </property>
+  </action>
+  <action name="actionSimulation_Server">
+   <property name="icon">
+    <iconset resource="../resource.qrc">
+     <normaloff>:/images/resource/icons/simulation_server.png</normaloff>:/images/resource/icons/simulation_server.png</iconset>
+   </property>
+   <property name="text">
+    <string>Simulation Server</string>
    </property>
   </action>
  </widget>

@@ -8,11 +8,13 @@
 #include "ui_networkassistwindow.h"
 
 #define SET_PROTOCOL_LABEL "Protocol"
+#define SET_DOIP_TEST_LABEL "DOIP Test"
 #define SET_CLIENT_IP_LABEL "Client IP"
 #define SET_SERVER_IP_LABEL "Server IP"
 #define SET_SERVER_PORT_LABEL "Server Port"
 #define SET_DATA_TYPE_LABEL "Data Type"
 #define SET_ERROR_PROCESS_LABEL "Error Process"
+#define SET_JSON_TEST_LABEL "Json Test"
 #define SET_CYCLE_SEND_MIN_TIME 5
 
 class NetworkHelper : public QObject
@@ -28,6 +30,7 @@ public:
     bool isReceiveDataEmpty() const;
 
     QByteArray getSendData(int row);
+    QByteArray getDataFromString(const std::string& str);
     void addSettingItem(bool isEdit, const QString& label, const QStringList& options);
 
     int getNextRow(int row);
@@ -60,7 +63,7 @@ public:
     QList<int> checkReceiveDataMap(const QString& timeStamp, const QByteArray& data);
 
     int getCheckedTableSend();
-    QList<int> getContinuousSendMessages(int start);
+    QList<int> getContinuousSendMessages(int start, bool isSend);
     QList<int> getAllSendMessages();
 
     void tryStopSend();

@@ -17,6 +17,8 @@
 #include "config.h"
 #include "common/tcpcomm.h"
 #include "common/udpcomm.h"
+#include "doipsettingwindow.h"
+#include "doip/diagnosticmessagehandler.h"
 
 NetworkAssistWindow::NetworkAssistWindow(QWidget *parent) :
     QDialog(parent),
@@ -53,6 +55,8 @@ void NetworkAssistWindow::closeComm() {
         comm->stop();
         comm->deleteLater();
         comm = nullptr;
+
+        isRouteActivation = false;
     }
 }
 
@@ -75,6 +79,7 @@ void NetworkAssistWindow::exitWindow() {
     closeComm();
     helper->stopReceiveTimers();
     helper->stopCycleTimers();
+    this->ui->comboBox->setCurrentIndex(0);
 }
 
 void NetworkAssistWindow::closeEvent(QCloseEvent *event) {
@@ -93,6 +98,18 @@ void NetworkAssistWindow::setWindow(bool isService) {
     }
 }
 
+void NetworkAssistWindow::autoTest() {
+    QComboBox *comboBox =getSettingComboBox(SET_JSON_TEST_LABEL);
+    if (!comboBox || (comboBox->currentIndex() == 1))
+        return;
+
+    on_buttonConnect_clicked();
+    if (!ui->buttonSend->isEnabled())
+        return;
+
+    on_buttonSend_clicked();
+}
+
 bool NetworkAssistWindow::saveConfigToFile() {
     QString fileName = QFileDialog::getSaveFileName(this, "Save config to file",
                                                         QDir::homePath(),
@@ -106,7 +123,8 @@ bool NetworkAssistWindow::saveConfigToFile() {
 
     QJsonDocument doc;
     QJsonObject jsonObject = doc.object();
-    jsonObject["server"] = isServer;
+    jsonObject["isServer"] = isServer;
+    jsonObject["messageType"] = ui->comboBox->currentIndex();
 
     // Save Settings
     QJsonArray settingsArray;
@@ -185,7 +203,7 @@ bool NetworkAssistWindow::isServerByLoadFile(const QString& fileName, bool& hasS
     }
 
     QJsonObject obj = doc.object();
-    hasServer = obj["server"].toBool();
+    hasServer = obj["isServer"].toBool();
     return true;
 }
 
@@ -204,7 +222,11 @@ bool NetworkAssistWindow::loadConfigFromFile(const QString& fileName) {
         return false;
     }
 
+    helper->initTableSend();
+
     QJsonObject obj = doc.object();
+    auto messageType = (obj["messageType"].toInt() > 0 && obj["messageType"].toInt() < ui->comboBox->count()) ? obj["messageType"].toInt() : 0;
+    ui->comboBox->setCurrentIndex(messageType);
 
     // Load Settings
     QJsonArray settingsArray = obj["settings"].toArray();
@@ -240,6 +262,9 @@ bool NetworkAssistWindow::loadConfigFromFile(const QString& fileName) {
         if (sendItemObject["interval"].toInt() > 0) {
             intervalSpinBox->setValue(sendItemObject["interval"].toInt());
         }
+        else {
+            intervalSpinBox->setValue(0);
+        }
     }
 
     for (int i = 0; i < sendListArray.size(); ++i) {
@@ -248,10 +273,14 @@ bool NetworkAssistWindow::loadConfigFromFile(const QString& fileName) {
         if (sendItemObject["next"].toInt() > 0) {
             nextItem->setText(QString::number(sendItemObject["next"].toInt()));
         }
+        else {
+            nextItem->setText("");
+        }
     }
 
     this->show();
 
+    autoTest();
     return true;
 }
 
@@ -271,11 +300,25 @@ void NetworkAssistWindow::setProtocol(uint8_t protocol, QComboBox* comboBox) {
     }
 }
 
+bool NetworkAssistWindow::isLocalIP(const std::string& ip) {
+    auto address = figkey::CaptureConfig::Instance().getConfigInfo().network.address;
+    for (const auto& addr : address) {
+        if (addr.ip == ip)
+            return true;
+    }
+
+    return false;
+}
+
 void NetworkAssistWindow::setClientIP(QComboBox* comboBox, const figkey::PacketInfo& packet) {
     comboBox->clear();
     if (isServer) {
-        comboBox->addItem(QString::fromStdString(packet.srcIP));
-        comboBox->addItem(QString::fromStdString(packet.destIP));
+        if (!isLocalIP(packet.srcIP)) {
+            comboBox->addItem(QString::fromStdString(packet.srcIP));
+        }
+        if (!isLocalIP(packet.destIP)) {
+            comboBox->addItem(QString::fromStdString(packet.destIP));
+        }
     }
     else {
         auto address = figkey::CaptureConfig::Instance().getConfigInfo().network.address;
@@ -287,6 +330,7 @@ void NetworkAssistWindow::setClientIP(QComboBox* comboBox, const figkey::PacketI
 
 void NetworkAssistWindow::setServerIP(QComboBox* comboBox, const figkey::PacketInfo& packet) {
     comboBox->clear();
+
     if (isServer) {
         auto address = figkey::CaptureConfig::Instance().getConfigInfo().network.address;
         for (const auto& addr : address) {
@@ -294,23 +338,31 @@ void NetworkAssistWindow::setServerIP(QComboBox* comboBox, const figkey::PacketI
         }
     }
     else {
-        comboBox->addItem(QString::fromStdString(packet.srcIP));
-        comboBox->addItem(QString::fromStdString(packet.destIP));
+        if (!isLocalIP(packet.srcIP)) {
+            comboBox->addItem(QString::fromStdString(packet.srcIP));
+        }
+        if (!isLocalIP(packet.destIP)) {
+            comboBox->addItem(QString::fromStdString(packet.destIP));
+        }
     }
 }
 
 void NetworkAssistWindow::setServerPort(QComboBox* comboBox, const figkey::PacketInfo& packet) {
     comboBox->clear();
     if (isServer) {
+        if (isLocalIP(packet.srcIP)) {
+            comboBox->addItem(QString::number(packet.srcPort));
+        }
+        if (isLocalIP(packet.destIP)) {
+            comboBox->addItem(QString::number(packet.destPort));
+        }
+    }
+    else {
         uint16_t porst[5]{13400, 13400, 8080, 1234, 5678};
         auto address = figkey::CaptureConfig::Instance().getConfigInfo().network.address;
         for (size_t i = 0; i < address.size() && i < 5; i++) {
             comboBox->addItem(QString::number(porst[i]));
         }
-    }
-    else {
-        comboBox->addItem(QString::number(packet.srcPort));
-        comboBox->addItem(QString::number(packet.destPort));
     }
 }
 
@@ -359,6 +411,101 @@ void NetworkAssistWindow::set(figkey::PacketInfo packet) {
                 break;
         }
     }
+
+    helper->initTableSend();
+}
+
+void NetworkAssistWindow::setSimulation(figkey::PacketInfo packet) {
+    canSaveFile = false;
+
+    for(int i = 0; i < ui->listSetting->count(); ++i)
+    {
+        QListWidgetItem* item = ui->listSetting->item(i);
+        QWidget* widget = ui->listSetting->itemWidget(item);
+        QComboBox* comboBox = widget->findChild<QComboBox*>();
+
+        switch(i)
+        {
+            case 0: // Protocol
+                if (0 == packet.index) {
+                    comboBox->setEnabled(true);
+                    return;
+                }
+
+                setProtocol(packet.protocolType, comboBox);
+                break;
+            case 1:
+                comboBox->clear();
+                comboBox->addItem(QString::fromStdString(packet.srcIP));
+                break;
+            case 2:
+                comboBox->clear();
+                comboBox->addItem(QString::fromStdString(packet.destIP));
+                break;
+            case 3:
+                comboBox->clear();
+                comboBox->addItem(QString::number(packet.destPort));
+                break;
+            default:
+                break;
+        }
+    }
+
+    helper->initTableSend();
+    setMessageType(1);
+}
+
+void NetworkAssistWindow::setMessageType(int type) {
+    if (type < 0 || type >= ui->comboBox->count())
+        return;
+
+    ui->comboBox->setCurrentIndex(type);
+}
+
+void NetworkAssistWindow::addRow(const figkey::PacketInfo& packet) {
+    if (packet.payloadLength < 1 || packet.data.empty())
+        return;
+
+    QComboBox* typeBox{ nullptr };
+    int lastReceiveIndex = -1;
+    int i = 0;
+    for (; i < ui->tableSend->rowCount(); ++i) {
+        typeBox = qobject_cast<QComboBox *>(ui->tableSend->cellWidget(i, 3));
+        if (ui->tableSend->item(i, 2)->text().isEmpty()) {
+            ui->tableSend->item(i, 2)->setText(QString::fromStdString(packet.data));
+            break;
+        }
+
+        if (typeBox && typeBox->currentIndex() == 1) {
+            lastReceiveIndex = i;
+        }
+    }
+
+    if ((i >= ui->tableSend->rowCount()) || !typeBox)
+        return;
+
+    if (isServer) {
+        std::string serverIp = getSettingItemValue(SET_SERVER_IP_LABEL).toStdString();
+        if (packet.srcIP == serverIp) {
+            typeBox->setCurrentIndex(0);
+        }
+        else {
+            typeBox->setCurrentIndex(1);
+        }
+    }
+    else {
+        std::string clientIp = getSettingItemValue(SET_CLIENT_IP_LABEL).toStdString();
+        if (packet.srcIP == clientIp) {
+            typeBox->setCurrentIndex(0);
+        }
+        else {
+            typeBox->setCurrentIndex(1);
+        }
+    }
+
+    if ((lastReceiveIndex >= 0) && ( typeBox->currentIndex() == 0)) {
+        ui->tableSend->item(lastReceiveIndex, 4)->setText(QString::number(i+1));
+    }
 }
 
 QString NetworkAssistWindow::getSettingItemValue(const QString& label) const {
@@ -406,7 +553,20 @@ void NetworkAssistWindow::on_buttonConnect_clicked()
     else {
         canSaveFile = true;
         ui->buttonDisconnect->setEnabled(true);
-        ui->buttonSend->setEnabled(true);
+
+        if (useTCP && ui->buttonDoIPSet->isEnabled()) {
+            ui->comboBox->setCurrentIndex(1);
+            ui->tableSend->item(0, 2)->setText(buildRoutingActivationResponse().toHex(' ').toUpper());
+            QComboBox* typeBox = qobject_cast<QComboBox *>(ui->tableSend->cellWidget(0, 3));
+            if (typeBox) {
+                typeBox->setCurrentIndex(1);
+            }
+            on_buttonSend_clicked();
+            isRouteActivation = comm->sendData(buildRoutingActivationRequest());
+        }
+        else {
+            ui->buttonSend->setEnabled(true);
+        }
     }
 }
 
@@ -429,7 +589,8 @@ bool NetworkAssistWindow::sendMessage(int row) {
         helper->setColumnCheckState(row, true);
     }
 
-    if (comm->sendData(helper->getSendData(row))) {
+    auto data = isRouteActivation?createDiagnosticMessage(helper->getSendData(row)) : helper->getSendData(row);
+    if (comm->sendData(data)) {
         ui->tableSend->setItem(row, 1, new QTableWidgetItem(QTime::currentTime().toString("hh:mm:ss.zzz")));
         return true;
     }
@@ -523,7 +684,7 @@ void NetworkAssistWindow::onDataReceived(const QByteArray& data) {
 }
 
 bool NetworkAssistWindow::sendAndReceiveMessage() {
-    auto sendList = helper->getContinuousSendMessages(0);
+    auto sendList = helper->getContinuousSendMessages(0, true);
     if (sendList.empty()) {
         QComboBox *typeBox = qobject_cast<QComboBox *>(ui->tableSend->cellWidget(0, 3));
         if (!typeBox || typeBox->currentIndex() != 1 ||
@@ -606,4 +767,10 @@ void NetworkAssistWindow::on_comboBox_currentIndexChanged(int index)
         helper->setCycleSend(false);
         break;
     }
+}
+
+void NetworkAssistWindow::on_buttonDoIPSet_clicked()
+{
+    DoIPSettingWindow doip;
+    doip.exec();
 }
