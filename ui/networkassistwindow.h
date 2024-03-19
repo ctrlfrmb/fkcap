@@ -7,6 +7,7 @@
 #include "def.h"
 #include "networkhelper.h"
 #include "common/basecomm.h"
+#include "doip/doiphelper.h"
 
 namespace Ui {
 class NetworkAssistWindow;
@@ -49,6 +50,8 @@ private slots:
 
     void on_buttonDoIPSet_clicked();
 
+    void on_buttonVehicleRequst_clicked();
+
 private:
     void closeComm();
     void isSaveFile();
@@ -72,9 +75,9 @@ private:
     Ui::NetworkAssistWindow *ui;
     NetworkHelper *helper { nullptr };
     BaseComm *comm { nullptr };
+    DoIPHelper *doip { nullptr };
 
     bool isServer { false };
-    bool isRouteActivation { false };
     bool canSaveFile { false };
 };
 

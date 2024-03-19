@@ -15,6 +15,9 @@ public:
     explicit DoIPSettingWindow(QWidget *parent = nullptr);
     ~DoIPSettingWindow();
 
+private slots:
+    void on_pushButton_clicked();
+
 private:
     void initWindow();
 

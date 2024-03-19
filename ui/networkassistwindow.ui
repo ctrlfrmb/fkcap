@@ -87,23 +87,7 @@
     <property name="title">
      <string/>
     </property>
-    <widget class="QPushButton" name="buttonDoIPSet">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>130</x>
-       <y>10</y>
-       <width>101</width>
-       <height>20</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>DoIP Setting</string>
-     </property>
-    </widget>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -139,29 +123,29 @@
          <bool>false</bool>
         </property>
         <property name="currentText">
-         <string>Single</string>
+         <string>single</string>
         </property>
         <property name="currentIndex">
          <number>0</number>
         </property>
         <item>
          <property name="text">
-          <string>Single</string>
+          <string>single</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>Send&amp;Receive</string>
+          <string>send&amp;receive</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>Cycle</string>
+          <string>cycle</string>
          </property>
         </item>
         <item>
          <property name="text">
-          <string>Many</string>
+          <string>many</string>
          </property>
         </item>
        </widget>
@@ -172,7 +156,7 @@
          <bool>false</bool>
         </property>
         <property name="text">
-         <string>Send</string>
+         <string>send</string>
         </property>
        </widget>
       </item>
@@ -182,12 +166,81 @@
          <bool>false</bool>
         </property>
         <property name="text">
-         <string>Stop Send</string>
+         <string>stop send</string>
         </property>
        </widget>
       </item>
      </layout>
     </widget>
+    <widget class="QGroupBox" name="groupDoIP">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>120</x>
+       <y>10</y>
+       <width>181</width>
+       <height>131</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>DoIP</string>
+     </property>
+     <widget class="QComboBox" name="comboDoIPVehicle">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>60</y>
+        <width>161</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <item>
+       <property name="text">
+        <string>vehicle identify</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>vehicle identify(EID)</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>vehicle identify(VIN)</string>
+       </property>
+      </item>
+     </widget>
+     <widget class="QPushButton" name="buttonDoIPSet">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>30</y>
+        <width>111</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>config</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="buttonVehicleRequst">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>90</y>
+        <width>111</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>vehicle requst</string>
+      </property>
+     </widget>
+    </widget>
+    <zorder>groupDoIP</zorder>
+    <zorder>layoutWidget</zorder>
    </widget>
    <widget class="QListWidget" name="listSetting">
     <property name="geometry">

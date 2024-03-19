@@ -17,116 +17,153 @@
 #include <QByteArray>
 #include <QApplication>
 
-#define DOIP_CLIENT_PATH "/config/doipclient.ini"
+#define DOIP_CLIENT_PATH "/config/doip.ini"
 
 namespace figkey {
 
 class DoIPClientConfig {
 public:
-    // Delete copy constructor and assignment operator to ensure uniqueness of the doip client config
     DoIPClientConfig(const DoIPClientConfig&) = delete;
     DoIPClientConfig(DoIPClientConfig&&) = delete;
     DoIPClientConfig& operator=(const DoIPClientConfig&) = delete;
     DoIPClientConfig& operator=(DoIPClientConfig&&) = delete;
 
-    // Retrieve an instance of the doip client config(singleton pattern)
     static DoIPClientConfig& Instance() {
         static DoIPClientConfig obj;
         return obj;
     }
 
-    int getVersion() const { return settings.value("client/version").toString().toInt(nullptr, 16); }
-    void setVersion(int value) { settings.setValue("client/version",
-                                                   QString("%1").arg(value, 2 /*width*/, 16 /*base*/, QChar('0') /*fill*/)); }
-
-    std::string getLocalIP() const { return settings.value("client/localIP").toString().toStdString(); }
-    void setLocalIP(const QString& value) { settings.setValue("client/localIP", value); }
-
-    std::string getServerIP() const { return settings.value("client/serverIP").toString().toStdString(); }
-    void setServerIP(const QString& value) { settings.setValue("client/serverIP", value); }
-
-    int getUdpPort() const { return settings.value("client/udpPort").toInt(); }
-    void setUdpPort(int value) { settings.setValue("client/udpPort", value); }
-
-    int getTcpPort() const { return settings.value("client/tcpPort").toInt(); }
-    void setTcpPort(int value) { settings.setValue("client/tcpPort", value); }
-
-    // 对于例如sourceAddress这样的16进制数，我们按照字符串保存和读取，然后进行相应的转换
-    unsigned short getSourceAddress() const { return settings.value("client/sourceAddress").toString().toUShort(nullptr, 16); }
-    void setSourceAddress(unsigned short value) {
-        settings.setValue("client/sourceAddress", QString("%1").arg(value, 4 /*width*/, 16 /*base*/, QChar('0') /*fill*/));
+    void load() {
+        version = settings.value("client/version").toString().toInt(nullptr, 16);
+        localIP = settings.value("client/localIP").toString().toStdString();
+        serverIP = settings.value("client/serverIP").toString().toStdString();
+        udpPort = settings.value("client/udpPort").toInt();
+        tcpPort =  settings.value("client/tcpPort").toInt();
+        sourceAddress = settings.value("client/sourceAddress").toString().toUShort(nullptr, 16);
+        targetAddress = settings.value("client/targetAddress").toString().toUShort(nullptr, 16);
+        activeType = settings.value("client/activeType").toString().toInt(nullptr, 16);
+        autoVehicleDiscovery = settings.value("client/autoVehicleDiscovery").toBool();
+        requireRoutingActivation = settings.value("client/requireRoutingActivation").toBool();
+        aliveCheckResponse = settings.value("client/aliveCheckResponse").toBool();
+        useOEMSpecific = settings.value("client/useOEMSpecific").toBool();
+        additionalOEMSpecific = QByteArray::fromHex(settings.value("client/additionalOEMSpecific").toString().toUtf8());
+        futureStandardization = QByteArray::fromHex(settings.value("client/futureStandardization").toString().toUtf8());
+        connTimeout = settings.value("client/connTimeout").toInt();
+        ctrlTime = settings.value("client/ctrlTime").toInt();
+        diagnosticMessageTime = settings.value("client/diagnosticMessageTime").toInt();
+        vehicleDiscoveryTime = settings.value("client/vehicleDiscoveryTime").toInt();
+        routingActivationWaitTime = settings.value("client/routingActivationWaitTime").toInt();
     }
 
-    unsigned short getTargetAddress() const { return settings.value("client/targetAddress").toString().toUShort(nullptr, 16); }
-    void setTargetAddress(unsigned short value) {
-        settings.setValue("client/targetAddress", QString("%1").arg(value, 4 /*width*/, 16 /*base*/, QChar('0') /*fill*/));
+    void save() {
+        settings.setValue("client/version", QString("%1").arg(version, 2 /*width*/, 16 /*base*/, QChar('0') /*fill*/));
+        settings.setValue("client/localIP", QString::fromStdString(localIP));
+        settings.setValue("client/serverIP", QString::fromStdString(serverIP));
+        settings.setValue("client/udpPort", udpPort);
+        settings.setValue("client/tcpPort", tcpPort);
+        settings.setValue("client/sourceAddress", QString("%1").arg(sourceAddress, 4 /*width*/, 16 /*base*/, QChar('0') /*fill*/));
+        settings.setValue("client/targetAddress", QString("%1").arg(targetAddress, 4 /*width*/, 16 /*base*/, QChar('0') /*fill*/));
+        settings.setValue("client/activeType", QString("%1").arg(activeType, 2 /*width*/, 16 /*base*/, QChar('0') /*fill*/));
+        settings.setValue("client/autoVehicleDiscovery", autoVehicleDiscovery);
+        settings.setValue("client/requireRoutingActivation", requireRoutingActivation);
+        settings.setValue("client/aliveCheckResponse", aliveCheckResponse);
+        settings.setValue("client/useOEMSpecific", useOEMSpecific);
+        settings.setValue("client/additionalOEMSpecific", QString(additionalOEMSpecific.toHex(' ')));
+        settings.setValue("client/futureStandardization", QString(futureStandardization.toHex(' ')));
+        settings.setValue("client/connTimeout", connTimeout);
+        settings.setValue("client/ctrlTime", ctrlTime);
+        settings.setValue("client/diagnosticMessageTime", diagnosticMessageTime);
+        settings.setValue("client/vehicleDiscoveryTime", vehicleDiscoveryTime);
+        settings.setValue("client/routingActivationWaitTime", routingActivationWaitTime);
     }
 
-    int getActiveType() const { return settings.value("client/activeType").toString().toInt(nullptr, 16); }
-    void setActiveType(int value) { settings.setValue("client/activeType",
-                                                      QString("%1").arg(value, 2 /*width*/, 16 /*base*/, QChar('0') /*fill*/)); }
+    int getVersion() const { return version; }
+    void setVersion(int value) { version = value; }
 
-    bool getAutoVehicleDiscovery() const { return settings.value("client/autoVehicleDiscovery").toBool(); }
-    void setAutoVehicleDiscovery(bool value) { settings.setValue("client/autoVehicleDiscovery", value); }
+    std::string getLocalIP() const { return localIP; }
+    void setLocalIP(const std::string& value) { localIP = value; }
 
-    bool getUseOEMSpecific() const { return settings.value("client/useOEMSpecific").toBool(); }
-    void setUseOEMSpecific(bool value) { settings.setValue("client/useOEMSpecific", value); }
+    std::string getServerIP() const { return serverIP; }
+    void setServerIP(const std::string& value) { serverIP = value; }
 
-    QByteArray getAdditionalOEMSpecific() const {
-        return QByteArray::fromHex(settings.value("client/additionalOEMSpecific").toString().toUtf8());
-    }
-    void setAdditionalOEMSpecific(const QByteArray& value) {
-        QString hexValue = value.toHex();
-        QString hexValueWithSpaces;
+    int getUdpPort() const { return udpPort; }
+    void setUdpPort(int value) { udpPort = value; }
 
-        for (int i = 0; i < hexValue.size(); i+=2) {
-            hexValueWithSpaces.append(hexValue.mid(i, 2));
-            hexValueWithSpaces.append(' ');
-        }
+    int getTcpPort() const { return tcpPort; }
+    void setTcpPort(int value) { tcpPort = value; }
 
-        settings.setValue("client/additionalOEMSpecific", hexValueWithSpaces.trimmed());
-    }
+    unsigned short getSourceAddress() const { return sourceAddress; }
+    void setSourceAddress(unsigned short value) {sourceAddress = value; }
 
-    QByteArray getFutureStandardization() const {
-        return QByteArray::fromHex(settings.value("client/futureStandardization").toString().toUtf8());
-    }
-    void setFutureStandardization(const QByteArray& value) { 
-        QString hexValue = value.toHex();
-        QString hexValueWithSpaces;
+    unsigned short getTargetAddress() const { return targetAddress; }
+    void setTargetAddress(unsigned short value) {targetAddress = value; }
 
-        for (int i = 0; i < hexValue.size(); i+=2) {
-            hexValueWithSpaces.append(hexValue.mid(i, 2));
-            hexValueWithSpaces.append(' ');
-        }
+    int getActiveType() const { return activeType; }
+    void setActiveType(int value) { activeType = value; }
 
-        settings.setValue("client/futureStandardization", hexValueWithSpaces.trimmed());
-    }
+    bool getAutoVehicleDiscovery() const { return autoVehicleDiscovery; }
+    void setAutoVehicleDiscovery(bool value) { autoVehicleDiscovery = value; }
 
-    int getConnTimeout() const { return settings.value("client/connTimeout").toInt(); }
-    void setConnTimeout(int value) { settings.setValue("client/connTimeout", value); }
+    bool getRequireRoutingActivation() const { return requireRoutingActivation; }
+    void setRequireRoutingActivation(bool value) { requireRoutingActivation = value;}
 
-    int getCtrlTime() const { return settings.value("client/ctrlTime").toInt(); }
-    void setCtrlTime(int value) { settings.setValue("client/ctrlTime", value); }
+    bool getAliveCheckResponse() const { return aliveCheckResponse; }
+    void setAliveCheckResponse(bool value) { aliveCheckResponse = value; }
 
-    int getDiagnosticMessageTime() const { return settings.value("client/diagnosticMessageTime").toInt(); }
-    void setDiagnosticMessageTime(int value) { settings.setValue("client/diagnosticMessageTime", value); }
+    bool getUseOEMSpecific() const { return useOEMSpecific; }
+    void setUseOEMSpecific(bool value) { useOEMSpecific = value; }
 
-    int getVehicleDiscoveryTime() const { return settings.value("client/vehicleDiscoveryTime").toInt(); }
-    void setVehicleDiscoveryTime(int value) { settings.setValue("client/vehicleDiscoveryTime", value); }
+    QByteArray getAdditionalOEMSpecific() const {return additionalOEMSpecific; }
+    void setAdditionalOEMSpecific(const QByteArray& value) { additionalOEMSpecific = value; }
 
-    int getTcpInitialInactivityTime() const { return settings.value("client/tcpInitialInactivityTime").toInt(); }
-    void setTcpInitialInactivityTime(int value) { settings.setValue("client/tcpInitialInactivityTime", value); }
+    QByteArray getFutureStandardization() const { return futureStandardization; }
+    void setFutureStandardization(const QByteArray& value) { futureStandardization = value; }
+
+    int getConnTimeout() const { return connTimeout; }
+    void setConnTimeout(int value) { connTimeout = value; }
+
+    int getCtrlTime() const { return ctrlTime; }
+    void setCtrlTime(int value) { ctrlTime = value; }
+
+    int getDiagnosticMessageTime() const { return diagnosticMessageTime;  }
+    void setDiagnosticMessageTime(int value) { diagnosticMessageTime = value; }
+
+    int getVehicleDiscoveryTime() const { return vehicleDiscoveryTime; }
+    void setVehicleDiscoveryTime(int value) { vehicleDiscoveryTime = value; }
+
+    int getRoutingActivationWaitTime() const { return routingActivationWaitTime; }
+    void setRoutingActivationWaitTime(int value) { routingActivationWaitTime = value; }
 
 private:
-    // DoIP Client config constructor
     DoIPClientConfig(): settings(QCoreApplication::applicationDirPath()+QString(DOIP_CLIENT_PATH), QSettings::IniFormat) {
-
+        load();
     }
 
-    // DoIP Client config destructor
-    ~DoIPClientConfig() {}
+    ~DoIPClientConfig() {
+        save();
+    }
 
     QSettings settings;
+
+    int version;
+    std::string localIP;
+    std::string serverIP;
+    int udpPort;
+    int tcpPort;
+    unsigned short sourceAddress;
+    unsigned short targetAddress;
+    int activeType;
+    bool autoVehicleDiscovery;
+    bool requireRoutingActivation;
+    bool aliveCheckResponse;
+    bool useOEMSpecific;
+    QByteArray additionalOEMSpecific;
+    QByteArray futureStandardization;
+    int connTimeout;
+    int ctrlTime;
+    int diagnosticMessageTime;
+    int vehicleDiscoveryTime;
+    int routingActivationWaitTime;
 };
 
 }// namespace figkey

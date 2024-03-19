@@ -8,7 +8,6 @@
 
 #include "networkhelper.h"
 #include "config.h"
-#include "networkassistwindow.h"
 
 NetworkHelper::NetworkHelper(Ui::NetworkAssistWindow *ui, QObject *parent)
     : QObject(parent), ui(ui)
@@ -93,22 +92,25 @@ void NetworkHelper::addSettingItem(bool isEdit, const QString& label, const QStr
     comboBox->addItems(options);
     comboBox->setEditable(isEdit);  // Allow user input
 
-    if (label == SET_DOIP_TEST_LABEL)
+    if (label == SET_PROTOCOL_LABEL)
     {
-        // Connect the signal that fires when the ComboBox selection changes.
         connect(comboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
             [=](int index) {
-                // Update flag based on the selection.
-                this->ui->buttonDoIPSet->setEnabled(index == 1);
+            this->ui->comboDoIPVehicle->setEnabled(index == 1);
+        });
+    }
+    else if (label == SET_DOIP_TEST_LABEL)
+    {
+        connect(comboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            [=](int index) {
+            this->ui->groupDoIP->setEnabled(index == 1);
         });
     }
     else if (label == SET_DATA_TYPE_LABEL)
     {
-        // Connect the signal that fires when the ComboBox selection changes.
         connect(comboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
             [=](int index) {
-                // Update flag based on the selection.
-                this->isASCII = (index == 1);
+            this->isASCII = (index == 1);
         });
     }
     else if (label == SET_ERROR_PROCESS_LABEL)
@@ -116,8 +118,8 @@ void NetworkHelper::addSettingItem(bool isEdit, const QString& label, const QStr
         // Connect the signal that fires when the ComboBox selection changes.
         connect(comboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
             [=](int index) {
-                // Update flag based on the selection.
-                this->isPass = (index == 0);
+            // Update flag based on the selection.
+            this->isPass = (index == 0);
         });
     }
 
@@ -643,3 +645,4 @@ void NetworkHelper::tryStopSend() {
 
     setSendState(false);
 }
+

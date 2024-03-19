@@ -21,18 +21,16 @@ SOURCES += main.cpp\
     src/common/basecomm.cpp \
     src/common/tcpcomm.cpp \
     src/common/udpcomm.cpp \
-    src/common/tcpclient.cpp \
-    src/common/udpclient.cpp \
     ipcap/src/protocol/doip.cpp \
     ipcap/src/protocol/ip.cpp \
     ipcap/src/protocol/uds.cpp \
     ipcap/src/config.cpp \
     ipcap/src/ipcap.cpp \
     ipcap/src/packet.cpp \
+    src/doip/doiphelper.cpp \
     src/sqlite.cpp \
     src/packeinfo.cpp \
     src/doip/doipclient.cpp \
-    src/doip/diagnosticmessagehandler.cpp \
     src/doip/doipgenericheaderhandler.cpp \
     ui/doipsettingwindow.cpp \
     ui/mainwindow.cpp \
@@ -45,8 +43,7 @@ HEADERS  += include/common/basecomm.h \
     include/common/tcpcomm.h \
     include/common/udpcomm.h \
     include/common/thread_pool.hpp \
-    include/common/tcpclient.h \
-    include/common/udpclient.h \
+    include/doip/doiphelper.h \
     include/npcap1.13/include/pcap/bluetooth.h \
     include/npcap1.13/include/pcap/bpf.h \
     include/npcap1.13/include/pcap/can_socketcan.h \
@@ -73,12 +70,10 @@ HEADERS  += include/common/basecomm.h \
     ipcap/include/def.h \
     ipcap/include/ipcap.h \
     ipcap/include/packet.h \
-    ipcap/include/testip.h \
     include/sqlite.h \
     include/packeinfo.h \
     include/doip/doipclientconfig.h \
     include/doip/doipclient.h \
-    include/doip/diagnosticmessagehandler.h \
     include/doip/doipgenericheaderhandler.h \
     ui/doipsettingwindow.h \
     ui/mainwindow.h \
@@ -91,7 +86,6 @@ FORMS    += ui/mainwindow.ui \
     ui/devicewindow.ui \
     ui/doipsettingwindow.ui \
     ui/filterwindow.ui \
-    ui/doipclientwindow.ui \
     ui/networkassistwindow.ui
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/include/npcap1.13/lib/x86_64/ -lwpcap

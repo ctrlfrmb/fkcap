@@ -17,7 +17,6 @@
 #include <stdlib.h>
 #include <cstdlib>
 #include <cstring>
-#include "diagnosticmessagehandler.h"
 #include "doipgenericheaderhandler.h"
 
 namespace figkey {

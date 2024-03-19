@@ -18,7 +18,6 @@
 #include "common/tcpcomm.h"
 #include "common/udpcomm.h"
 #include "doipsettingwindow.h"
-#include "doip/diagnosticmessagehandler.h"
 
 NetworkAssistWindow::NetworkAssistWindow(QWidget *parent) :
     QDialog(parent),
@@ -27,6 +26,8 @@ NetworkAssistWindow::NetworkAssistWindow(QWidget *parent) :
     ui->setupUi(this);
     helper = new NetworkHelper(ui, this);
     connect(helper, &NetworkHelper::sendMessage, this, &NetworkAssistWindow::sendMessage);
+    doip = new DoIPHelper(ui, this);
+    connect(doip, &DoIPHelper::sendMessage, this, &NetworkAssistWindow::sendMessage);
 
     initWindow();
 }
@@ -37,9 +38,9 @@ NetworkAssistWindow::~NetworkAssistWindow()
 }
 
 void NetworkAssistWindow::initWindow() {
-    if (!helper) {
+    if (!helper || !doip) {
         // 显示错误消息框
-        QMessageBox::critical(this, tr("Initialization Error"), tr("Unable to initialize the window because helper is null."));
+        QMessageBox::critical(this, tr("Initialization Error"), tr("Unable to initialize the window because helper or doip is null."));
 
         // 关闭当前窗口
         this->close();
@@ -55,8 +56,6 @@ void NetworkAssistWindow::closeComm() {
         comm->stop();
         comm->deleteLater();
         comm = nullptr;
-
-        isRouteActivation = false;
     }
 }
 
@@ -79,7 +78,6 @@ void NetworkAssistWindow::exitWindow() {
     closeComm();
     helper->stopReceiveTimers();
     helper->stopCycleTimers();
-    this->ui->comboBox->setCurrentIndex(0);
 }
 
 void NetworkAssistWindow::closeEvent(QCloseEvent *event) {
@@ -525,17 +523,15 @@ QString NetworkAssistWindow::getSettingItemValue(const QString& label) const {
 void NetworkAssistWindow::on_buttonConnect_clicked()
 {
     ui->buttonConnect->setEnabled(false);
-
-    // 获取用户的设置
     closeComm();
 
+    // 获取用户的设置
     QString clientIp = getSettingItemValue(SET_CLIENT_IP_LABEL);
     QString serverIp = getSettingItemValue(SET_SERVER_IP_LABEL);
     int serverPort = getSettingItemValue(SET_SERVER_PORT_LABEL).toInt();
-
     QString protocol = getSettingItemValue(SET_PROTOCOL_LABEL);
-    bool useTCP = (protocol == "TCP");
 
+    bool useTCP = (protocol == "TCP");
     if (useTCP) {
         comm = new TCPComm(clientIp, serverIp, serverPort, isServer, this);
     } else {
@@ -552,19 +548,11 @@ void NetworkAssistWindow::on_buttonConnect_clicked()
     }
     else {
         canSaveFile = true;
-        ui->buttonDisconnect->setEnabled(true);
-
         if (useTCP && ui->buttonDoIPSet->isEnabled()) {
-            ui->comboBox->setCurrentIndex(1);
-            ui->tableSend->item(0, 2)->setText(buildRoutingActivationResponse().toHex(' ').toUpper());
-            QComboBox* typeBox = qobject_cast<QComboBox *>(ui->tableSend->cellWidget(0, 3));
-            if (typeBox) {
-                typeBox->setCurrentIndex(1);
-            }
-            on_buttonSend_clicked();
-            isRouteActivation = comm->sendData(buildRoutingActivationRequest());
+            doip->start(comm);
         }
         else {
+            ui->buttonDisconnect->setEnabled(true);
             ui->buttonSend->setEnabled(true);
         }
     }
@@ -589,7 +577,11 @@ bool NetworkAssistWindow::sendMessage(int row) {
         helper->setColumnCheckState(row, true);
     }
 
-    auto data = isRouteActivation?createDiagnosticMessage(helper->getSendData(row)) : helper->getSendData(row);
+    auto data = helper->getSendData(row);
+    if (doip->hasActivated()) {
+        data = DoIPPacketCommon::ConstructDiagnosticMessageRequest(data);
+    }
+
     if (comm->sendData(data)) {
         ui->tableSend->setItem(row, 1, new QTableWidgetItem(QTime::currentTime().toString("hh:mm:ss.zzz")));
         return true;
@@ -662,13 +654,14 @@ void NetworkAssistWindow::onDataReceived(const QByteArray& data) {
         }
     }
 
+    if (doip->hasRequst() && data.size() >= DOIP_GENERIC_HEADER_LENGTH) {
+        doip->parseMessage(data);
+    }
+
     if (helper->dataIsAscii()) {
         dataString = data;
     } else {
-        for (uint8_t byte : data) {
-            dataString.append(QString("%1 ").arg(byte, 2, 16, QChar('0')).toUpper());
-        }
-        dataString = dataString.trimmed();
+        dataString = data.toHex(' ');
     }
 
     if (ui->tableReceive->rowCount() >= figkey::CaptureConfig::Instance().getConfigInfo().receiveRows) {
@@ -771,6 +764,13 @@ void NetworkAssistWindow::on_comboBox_currentIndexChanged(int index)
 
 void NetworkAssistWindow::on_buttonDoIPSet_clicked()
 {
-    DoIPSettingWindow doip;
-    doip.exec();
+    DoIPSettingWindow setting;
+    setting.exec();
+}
+
+void NetworkAssistWindow::on_buttonVehicleRequst_clicked()
+{
+    if (comm) {
+        comm->sendData(DoIPPacketCommon::ConstructVehicleIdentificationRequest());
+    }
 }
