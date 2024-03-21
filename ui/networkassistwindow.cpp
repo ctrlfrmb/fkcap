@@ -17,7 +17,8 @@
 #include "config.h"
 #include "common/tcpcomm.h"
 #include "common/udpcomm.h"
-#include "doipsettingwindow.h"
+#include "doip/doipclientconfig.h"
+#include "doip/doipserverconfig.h"
 
 NetworkAssistWindow::NetworkAssistWindow(QWidget *parent) :
     QDialog(parent),
@@ -282,86 +283,23 @@ bool NetworkAssistWindow::loadConfigFromFile(const QString& fileName) {
     return true;
 }
 
-void NetworkAssistWindow::setProtocol(uint8_t protocol, QComboBox* comboBox) {
-    QString text{"TCP"};
-    switch (protocol) {
-        case figkey::PROTOCOL_TYPE_DOIP:
-            return;
-        case figkey::PROTOCOL_TYPE_UDP:
-            text = "UDP";
-        break;
-    }
+bool NetworkAssistWindow::startDiagnose() {
+    using namespace figkey;
+    //auto& client = DoIPClientConfig::Instance();
+    auto& server = DoIPServerConfig::Instance();
 
-    if (!text.isEmpty()) {
-        comboBox->setCurrentText(text);
-        comboBox->setEnabled(false);
-    }
-}
+    setProtocol(figkey::PROTOCOL_TYPE_DOIP);
+    setSettingItemValue(SET_CLIENT_IP_LABEL, "", true);
+    setSettingItemValue(SET_SERVER_IP_LABEL, server.getIpAddress(), true);
+    setSettingItemValue(SET_SERVER_PORT_LABEL, QString::number(server.getTcpPort()), true);
 
-bool NetworkAssistWindow::isLocalIP(const std::string& ip) {
-    auto address = figkey::CaptureConfig::Instance().getConfigInfo().network.address;
-    for (const auto& addr : address) {
-        if (addr.ip == ip)
-            return true;
-    }
+    helper->initTableSend();
+    ui->tableSend->item(0, 2)->setText("10 01");
+    helper->setColumnCheckState(0, true);
+    this->show();
 
-    return false;
-}
-
-void NetworkAssistWindow::setClientIP(QComboBox* comboBox, const figkey::PacketInfo& packet) {
-    comboBox->clear();
-    if (isServer) {
-        if (!isLocalIP(packet.srcIP)) {
-            comboBox->addItem(QString::fromStdString(packet.srcIP));
-        }
-        if (!isLocalIP(packet.destIP)) {
-            comboBox->addItem(QString::fromStdString(packet.destIP));
-        }
-    }
-    else {
-        auto address = figkey::CaptureConfig::Instance().getConfigInfo().network.address;
-        for (const auto& addr : address) {
-            comboBox->addItem(QString::fromStdString(addr.ip));
-        }
-    }
-}
-
-void NetworkAssistWindow::setServerIP(QComboBox* comboBox, const figkey::PacketInfo& packet) {
-    comboBox->clear();
-
-    if (isServer) {
-        auto address = figkey::CaptureConfig::Instance().getConfigInfo().network.address;
-        for (const auto& addr : address) {
-            comboBox->addItem(QString::fromStdString(addr.ip));
-        }
-    }
-    else {
-        if (!isLocalIP(packet.srcIP)) {
-            comboBox->addItem(QString::fromStdString(packet.srcIP));
-        }
-        if (!isLocalIP(packet.destIP)) {
-            comboBox->addItem(QString::fromStdString(packet.destIP));
-        }
-    }
-}
-
-void NetworkAssistWindow::setServerPort(QComboBox* comboBox, const figkey::PacketInfo& packet) {
-    comboBox->clear();
-    if (isServer) {
-        if (isLocalIP(packet.srcIP)) {
-            comboBox->addItem(QString::number(packet.srcPort));
-        }
-        if (isLocalIP(packet.destIP)) {
-            comboBox->addItem(QString::number(packet.destPort));
-        }
-    }
-    else {
-        uint16_t porst[5]{13400, 13400, 8080, 1234, 5678};
-        auto address = figkey::CaptureConfig::Instance().getConfigInfo().network.address;
-        for (size_t i = 0; i < address.size() && i < 5; i++) {
-            comboBox->addItem(QString::number(porst[i]));
-        }
-    }
+    on_buttonConnect_clicked();
+    return true;
 }
 
 QComboBox* NetworkAssistWindow::getSettingComboBox(const QString& label) {
@@ -377,80 +315,157 @@ QComboBox* NetworkAssistWindow::getSettingComboBox(const QString& label) {
     return nullptr;
 }
 
-void NetworkAssistWindow::set(figkey::PacketInfo packet) {
-    canSaveFile = false;
-
-    for(int i = 0; i < ui->listSetting->count(); ++i)
-    {
-        QListWidgetItem* item = ui->listSetting->item(i);
-        QWidget* widget = ui->listSetting->itemWidget(item);
-        QComboBox* comboBox = widget->findChild<QComboBox*>();
-
-        switch(i)
-        {
-            case 0: // Protocol
-                if (0 == packet.index) {
-                    comboBox->setEnabled(true);
-                    return;
-                }
-
-                setProtocol(packet.protocolType, comboBox);
-                break;
-            case 1:
-                setClientIP(comboBox, packet);
-                break;
-            case 2:
-                setServerIP(comboBox, packet);
-                break;
-            case 3:
-                setServerPort(comboBox, packet);
-                break;
-            default:
-                break;
-        }
+void NetworkAssistWindow::enableSettingComboBox(const QString& label, bool enable) {
+    QComboBox* comboBox = getSettingComboBox(label);
+    if (comboBox) {
+        comboBox->setEnabled(enable);
     }
-
-    helper->initTableSend();
 }
 
-void NetworkAssistWindow::setSimulation(figkey::PacketInfo packet) {
-    canSaveFile = false;
-
-    for(int i = 0; i < ui->listSetting->count(); ++i)
-    {
-        QListWidgetItem* item = ui->listSetting->item(i);
-        QWidget* widget = ui->listSetting->itemWidget(item);
-        QComboBox* comboBox = widget->findChild<QComboBox*>();
-
-        switch(i)
-        {
-            case 0: // Protocol
-                if (0 == packet.index) {
-                    comboBox->setEnabled(true);
-                    return;
-                }
-
-                setProtocol(packet.protocolType, comboBox);
-                break;
-            case 1:
-                comboBox->clear();
-                comboBox->addItem(QString::fromStdString(packet.srcIP));
-                break;
-            case 2:
-                comboBox->clear();
-                comboBox->addItem(QString::fromStdString(packet.destIP));
-                break;
-            case 3:
-                comboBox->clear();
-                comboBox->addItem(QString::number(packet.destPort));
-                break;
-            default:
-                break;
-        }
+QString NetworkAssistWindow::getSettingItemValue(const QString& label) {
+    QComboBox* comboBox = getSettingComboBox(label);
+    if (comboBox) {
+        return comboBox->currentText();
     }
 
+    return QString();
+}
+
+void NetworkAssistWindow::setSettingItemValue(const QString& label, const QString& value, bool clear) {
+    QComboBox* comboBox = getSettingComboBox(label);
+    if (comboBox) {
+        if (clear) {
+            comboBox->clear();
+            if (!value.isEmpty()) {
+                comboBox->addItem(value);
+            }
+        }
+        else {
+            comboBox->setCurrentText(value);
+        }
+    }
+}
+
+void NetworkAssistWindow::setProtocol(uint8_t protocol) {
+    QComboBox* comboBox = getSettingComboBox(SET_PROTOCOL_LABEL);
+    if (comboBox) {
+        QString text{"TCP"};
+        switch (protocol) {
+        case figkey::PROTOCOL_TYPE_DOIP:
+            text = "DOIP";
+            break;
+        case figkey::PROTOCOL_TYPE_UDP:
+            text = "UDP";
+            break;
+        default:
+            break;
+        }
+
+        if (!text.isEmpty()) {
+            comboBox->setCurrentText(text);
+            comboBox->setEnabled(false);
+        }
+    }
+}
+
+bool NetworkAssistWindow::isLocalIP(const std::string& ip) {
+    auto address = figkey::CaptureConfig::Instance().getConfigInfo().network.address;
+    for (const auto& addr : address) {
+        if (addr.ip == ip)
+            return true;
+    }
+
+    return false;
+}
+
+void NetworkAssistWindow::setClientIP(const figkey::PacketInfo& packet) {
+    QComboBox* comboBox = getSettingComboBox(SET_CLIENT_IP_LABEL);
+    if (comboBox) {
+        comboBox->clear();
+
+        if (isServer) {
+            if (!isLocalIP(packet.srcIP)) {
+                comboBox->addItem(QString::fromStdString(packet.srcIP));
+            }
+            if (!isLocalIP(packet.destIP)) {
+                comboBox->addItem(QString::fromStdString(packet.destIP));
+            }
+        }
+        else {
+            auto address = figkey::CaptureConfig::Instance().getConfigInfo().network.address;
+            for (const auto& addr : address) {
+                comboBox->addItem(QString::fromStdString(addr.ip));
+            }
+        }
+    }
+}
+
+void NetworkAssistWindow::setServerIP(const figkey::PacketInfo& packet) {
+    QComboBox* comboBox = getSettingComboBox(SET_SERVER_IP_LABEL);
+    if (comboBox) {
+        comboBox->clear();
+
+        if (isServer) {
+            auto address = figkey::CaptureConfig::Instance().getConfigInfo().network.address;
+            for (const auto& addr : address) {
+                comboBox->addItem(QString::fromStdString(addr.ip));
+            }
+        }
+        else {
+            if (!isLocalIP(packet.srcIP)) {
+                comboBox->addItem(QString::fromStdString(packet.srcIP));
+            }
+            if (!isLocalIP(packet.destIP)) {
+                comboBox->addItem(QString::fromStdString(packet.destIP));
+            }
+        }
+    }
+}
+
+void NetworkAssistWindow::setServerPort(const figkey::PacketInfo& packet) {
+    QComboBox* comboBox = getSettingComboBox(SET_SERVER_PORT_LABEL);
+    if (comboBox) {
+        comboBox->clear();
+        if (isServer) {
+            if (isLocalIP(packet.srcIP)) {
+                comboBox->addItem(QString::number(packet.srcPort));
+            }
+            if (isLocalIP(packet.destIP)) {
+                comboBox->addItem(QString::number(packet.destPort));
+            }
+        }
+        else {
+            uint16_t porst[5]{13400, 13400, 8080, 1234, 5678};
+            auto address = figkey::CaptureConfig::Instance().getConfigInfo().network.address;
+            for (size_t i = 0; i < address.size() && i < 5; i++) {
+                comboBox->addItem(QString::number(porst[i]));
+            }
+        }
+    }
+}
+
+bool NetworkAssistWindow::set(figkey::PacketInfo packet) {
+    canSaveFile = false;
+    if (0 == packet.index) {
+        enableSettingComboBox(SET_PROTOCOL_LABEL, true);
+        return false;
+    }
+
+    setProtocol(packet.protocolType);
+    setClientIP(packet);
+    setServerIP(packet);
+    setServerPort(packet);
+
     helper->initTableSend();
+    return true;
+}
+
+bool NetworkAssistWindow::setSimulation(figkey::PacketInfo packet) {
+    if (!set(packet))
+        return false;
+
     setMessageType(1);
+    return true;
 }
 
 void NetworkAssistWindow::setMessageType(int type) {
@@ -506,20 +521,6 @@ void NetworkAssistWindow::addRow(const figkey::PacketInfo& packet) {
     }
 }
 
-QString NetworkAssistWindow::getSettingItemValue(const QString& label) const {
-    for (int i = 0; i < ui->listSetting->count(); ++i) {
-        QListWidgetItem* item = ui->listSetting->item(i);
-        QWidget* widget = ui->listSetting->itemWidget(item);
-        QLabel *labelWidget = widget->findChild<QLabel*>();
-        QComboBox *comboBox = widget->findChild<QComboBox*>();
-
-        if (labelWidget->text() == label) {
-            return comboBox->currentText();
-        }
-    }
-    return QString();
-}
-
 void NetworkAssistWindow::on_buttonConnect_clicked()
 {
     ui->buttonConnect->setEnabled(false);
@@ -532,7 +533,8 @@ void NetworkAssistWindow::on_buttonConnect_clicked()
     QString protocol = getSettingItemValue(SET_PROTOCOL_LABEL);
 
     bool useTCP = (protocol == "TCP");
-    if (useTCP) {
+    bool useDOIP = (protocol == "DOIP");
+    if (useTCP || useDOIP) {
         comm = new TCPComm(clientIp, serverIp, serverPort, isServer, this);
     } else {
         comm = new UDPComm(clientIp, serverIp, serverPort, isServer, this);
@@ -548,7 +550,7 @@ void NetworkAssistWindow::on_buttonConnect_clicked()
     }
     else {
         canSaveFile = true;
-        if (useTCP && ui->buttonDoIPSet->isEnabled()) {
+        if (useDOIP) {
             doip->start(comm);
         }
         else {
@@ -762,15 +764,4 @@ void NetworkAssistWindow::on_comboBox_currentIndexChanged(int index)
     }
 }
 
-void NetworkAssistWindow::on_buttonDoIPSet_clicked()
-{
-    DoIPSettingWindow setting;
-    setting.exec();
-}
 
-void NetworkAssistWindow::on_buttonVehicleRequst_clicked()
-{
-    if (comm) {
-        comm->sendData(DoIPPacketCommon::ConstructVehicleIdentificationRequest());
-    }
-}

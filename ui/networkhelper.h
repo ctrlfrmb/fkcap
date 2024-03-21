@@ -8,7 +8,6 @@
 #include "ui_networkassistwindow.h"
 
 #define SET_PROTOCOL_LABEL "Protocol"
-#define SET_DOIP_TEST_LABEL "DOIP Test"
 #define SET_CLIENT_IP_LABEL "Client IP"
 #define SET_SERVER_IP_LABEL "Server IP"
 #define SET_SERVER_PORT_LABEL "Server Port"

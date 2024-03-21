@@ -20,6 +20,8 @@
         <file>resource/icons/simulation_client.png</file>
         <file>resource/icons/simulation_server.png</file>
         <file>resource/icons/doip_setting.png</file>
+        <file>resource/icons/sender.png</file>
+        <file>resource/icons/vehicle_identify.png</file>
     </qresource>
     <qresource prefix="/"/>
 </RCC>

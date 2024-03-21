@@ -451,3 +451,17 @@ void MainWindow::on_actionSimulation_Server_triggered()
 
     server.show();
 }
+
+void MainWindow::on_actionSender_triggered()
+{
+    sender.show();
+}
+
+void MainWindow::on_actionVehicle_Identify_triggered()
+{
+    if (vehicle.exec() == QDialog::Rejected) {
+        return;
+    }
+
+    client.startDiagnose();
+}

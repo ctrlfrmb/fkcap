@@ -24,6 +24,8 @@
 #define DOIP_DIAGNOSTIC_ACK 0x8002
 #define DOIP_DIAGNOSTIC_NACK 0x8003
 
+#define DOIP_VEHICLE_ANNOUNCEMENT_MIN_LENGTH 32
+#define DOIP_VEHICLE_ANNOUNCEMENT_MAX_LENGTH 33
 #define DOIP_ROUTE_ACTIVATION_RESERVED_ISO13400_LENGTH 4
 #define DOIP_ROUTE_ACTIVATION_RESERVED_OEM_LENGTH 4
 #define DOIP_ROUTE_ACTIVATION_RESPONSE_MIN_LENGTH 9
@@ -38,23 +40,13 @@
 #define DOIP_ROUTING_ACTIVATION_SUCCESSFULLY_ACTIVATED 0x10
 #define DOIP_ROUTING_ACTIVATION_WILL_ACTIVATED_CONFIRMATION_REQUIRED 0x11
 
-const int _NACKLength = 1;
-
-const unsigned char _IncorrectPatternFormatCode = 0x00;
-const unsigned char _UnknownPayloadTypeCode = 0x01;
-const unsigned char _InvalidPayloadLengthCode = 0x04;
-
-enum PayloadType {
-    NEGATIVEACK,
-    ROUTINGACTIVATIONREQUEST,
-    ROUTINGACTIVATIONRESPONSE,
-    VEHICLEIDENTREQUEST,
-    VEHICLEIDENTRESPONSE,
-    DIAGNOSTICMESSAGE,
-    DIAGNOSTICPOSITIVEACK,
-    DIAGNOSTICNEGATIVEACK,
-    ALIVECHECKRESPONSE,
-};
+#define DOIP_VEHICLE_IP_ATTRIBUTE "Ip Address"
+#define DOIP_VEHICLE_PORT_ATTRIBUTE "Ip Port"
+#define DOIP_VEHICLE_LOGIC_ADDRESS_ATTRIBUTE "Logic Address"
+#define DOIP_VEHICLE_EID_ATTRIBUTE "EID"
+#define DOIP_VEHICLE_GID_ATTRIBUTE "GID"
+#define DOIP_VEHICLE_VIN_ATTRIBUTE "VIN"
+#define DOIP_VEHICLE_SYNC_STATUS_ATTRIBUTE "VIN/GID sync status"
 
 enum class ByteOrder : uint8_t{
     kHost,
@@ -178,6 +170,16 @@ public:
 public:
     static QByteArray ConstructVehicleIdentificationRequest();
 
+    static QByteArray ConstructVehicleIdentificationRequestWithEid();
+
+    static QByteArray ConstructVehicleIdentificationRequestWithEid(const QByteArray &eid);
+
+    static QByteArray ConstructVehicleIdentificationRequestWithVin();
+
+    static QByteArray ConstructVehicleIdentificationRequestWithVin(const QByteArray &vin);
+
+    static QMap<QString, QString> ParseVehicleAnnouncementInformation(const QByteArray &payload);
+
     /**
      * 构造路由激活指令
      * header: ver[1] + ~ver[1] + payload_type[2] + payload_lenght[4]
@@ -205,16 +207,6 @@ public:
 //    static UdsPayloadMessage ParseDoipUdsPayloadOnly(const std::vector<uint8_t>& doip_payload);
 //    static RoutingActivationInfo ParseRoutingActivationResponse(const std::vector<uint8_t>& payload);
 };
-
-struct GenericHeaderAction {
-    PayloadType type;
-    unsigned char value;
-    unsigned long payloadLength;
-};
-
-GenericHeaderAction parseGenericHeader(unsigned char* data, int dataLenght);
-QByteArray createGenericHeader(PayloadType type, int length);
-
 
 #endif /* DOIPGENERICHEADERHANDLER_H */
 

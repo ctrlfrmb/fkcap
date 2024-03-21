@@ -78,10 +78,10 @@
    <widget class="QGroupBox" name="groupBox">
     <property name="geometry">
      <rect>
-      <x>315</x>
-      <y>20</y>
-      <width>295</width>
-      <height>140</height>
+      <x>319</x>
+      <y>19</y>
+      <width>291</width>
+      <height>141</height>
      </rect>
     </property>
     <property name="title">
@@ -90,7 +90,7 @@
     <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
-       <x>10</x>
+       <x>90</x>
        <y>10</y>
        <width>103</width>
        <height>128</height>
@@ -172,75 +172,6 @@
       </item>
      </layout>
     </widget>
-    <widget class="QGroupBox" name="groupDoIP">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>120</x>
-       <y>10</y>
-       <width>181</width>
-       <height>131</height>
-      </rect>
-     </property>
-     <property name="title">
-      <string>DoIP</string>
-     </property>
-     <widget class="QComboBox" name="comboDoIPVehicle">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>60</y>
-        <width>161</width>
-        <height>22</height>
-       </rect>
-      </property>
-      <item>
-       <property name="text">
-        <string>vehicle identify</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>vehicle identify(EID)</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>vehicle identify(VIN)</string>
-       </property>
-      </item>
-     </widget>
-     <widget class="QPushButton" name="buttonDoIPSet">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>30</y>
-        <width>111</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>config</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="buttonVehicleRequst">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>90</y>
-        <width>111</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>vehicle requst</string>
-      </property>
-     </widget>
-    </widget>
-    <zorder>groupDoIP</zorder>
-    <zorder>layoutWidget</zorder>
    </widget>
    <widget class="QListWidget" name="listSetting">
     <property name="geometry">

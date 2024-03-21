@@ -30,20 +30,21 @@ SOURCES += main.cpp\
     src/doip/doiphelper.cpp \
     src/sqlite.cpp \
     src/packeinfo.cpp \
-    src/doip/doipclient.cpp \
     src/doip/doipgenericheaderhandler.cpp \
     ui/doipsettingwindow.cpp \
     ui/mainwindow.cpp \
     ui/devicewindow.cpp \
     ui/filterwindow.cpp \
     ui/networkassistwindow.cpp \
-    ui/networkhelper.cpp
+    ui/networkhelper.cpp \
+    ui/vehicleidentifywindow.cpp
 
 HEADERS  += include/common/basecomm.h \
     include/common/tcpcomm.h \
     include/common/udpcomm.h \
     include/common/thread_pool.hpp \
     include/doip/doiphelper.h \
+    include/doip/doipserverconfig.h \
     include/npcap1.13/include/pcap/bluetooth.h \
     include/npcap1.13/include/pcap/bpf.h \
     include/npcap1.13/include/pcap/can_socketcan.h \
@@ -73,14 +74,15 @@ HEADERS  += include/common/basecomm.h \
     include/sqlite.h \
     include/packeinfo.h \
     include/doip/doipclientconfig.h \
-    include/doip/doipclient.h \
     include/doip/doipgenericheaderhandler.h \
     ui/doipsettingwindow.h \
     ui/mainwindow.h \
     ui/devicewindow.h \
     ui/filterwindow.h \
     ui/networkassistwindow.h \
-    ui/networkhelper.h
+    ui/networkhelper.h \
+    ui/senderwindow.h \
+    ui/vehicleidentifywindow.h
 
 FORMS    += ui/mainwindow.ui \
     ui/devicewindow.ui \

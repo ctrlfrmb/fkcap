@@ -92,21 +92,7 @@ void NetworkHelper::addSettingItem(bool isEdit, const QString& label, const QStr
     comboBox->addItems(options);
     comboBox->setEditable(isEdit);  // Allow user input
 
-    if (label == SET_PROTOCOL_LABEL)
-    {
-        connect(comboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            [=](int index) {
-            this->ui->comboDoIPVehicle->setEnabled(index == 1);
-        });
-    }
-    else if (label == SET_DOIP_TEST_LABEL)
-    {
-        connect(comboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            [=](int index) {
-            this->ui->groupDoIP->setEnabled(index == 1);
-        });
-    }
-    else if (label == SET_DATA_TYPE_LABEL)
+    if (label == SET_DATA_TYPE_LABEL)
     {
         connect(comboBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
             [=](int index) {
@@ -135,8 +121,7 @@ void NetworkHelper::addSettingItem(bool isEdit, const QString& label, const QStr
 
 void NetworkHelper::initListSetting() {
     // Create QListWidgetItem and corresponding custom QWidget for each setting.
-    addSettingItem(false, SET_PROTOCOL_LABEL, {"TCP", "UDP"});
-    addSettingItem(false, SET_DOIP_TEST_LABEL,  {"False", "True"});
+    addSettingItem(false, SET_PROTOCOL_LABEL, {"TCP", "UDP", "DOIP"});
 
     QStringList clientIps;
     auto address = figkey::CaptureConfig::Instance().getConfigInfo().network.address;
@@ -645,4 +630,3 @@ void NetworkHelper::tryStopSend() {
 
     setSendState(false);
 }
-

@@ -76,11 +76,11 @@ void UDPComm::readyRead() {
                 continue;
             }
         }
-        else {
-            if ((m_partAddress != QHostAddress(m_serverIp)) || (m_partPort != m_serverPort)) {
-                continue;
-            }
-        }
+//        else {
+//            if ((m_partAddress != QHostAddress(m_serverIp)) || (m_partPort != m_serverPort)) {
+//                continue;
+//            }
+//        }
 
         emit dataReceived(datagram);
     }

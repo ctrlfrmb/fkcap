@@ -2,6 +2,7 @@
 #define DOIPSETTINGWINDOW_H
 
 #include <QDialog>
+#include <QCloseEvent>
 
 namespace Ui {
 class DoIPSettingWindow;
@@ -15,8 +16,8 @@ public:
     explicit DoIPSettingWindow(QWidget *parent = nullptr);
     ~DoIPSettingWindow();
 
-private slots:
-    void on_pushButton_clicked();
+protected:
+    void closeEvent(QCloseEvent *event) override;
 
 private:
     void initWindow();

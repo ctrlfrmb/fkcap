@@ -25,8 +25,9 @@ public:
     bool saveConfigToFile();
     static bool isServerByLoadFile(const QString& fileName, bool& hasServer);
     bool loadConfigFromFile(const QString& fileName);
-    void set(figkey::PacketInfo packet);
-    void setSimulation(figkey::PacketInfo packet);
+    bool startDiagnose();
+    bool set(figkey::PacketInfo packet);
+    bool setSimulation(figkey::PacketInfo packet);
     void setMessageType(int type);
     void addRow(const figkey::PacketInfo& packet);
 
@@ -48,10 +49,6 @@ private slots:
 
     void onDataReceived(const QByteArray& data);
 
-    void on_buttonDoIPSet_clicked();
-
-    void on_buttonVehicleRequst_clicked();
-
 private:
     void closeComm();
     void isSaveFile();
@@ -59,13 +56,16 @@ private:
     void exitWindow();
     void autoTest();
 
-    void setProtocol(uint8_t protocol, QComboBox* comboBox);
-    bool isLocalIP(const std::string& ip);
-    void setClientIP(QComboBox* comboBox, const figkey::PacketInfo& packet);
-    void setServerIP(QComboBox* comboBox, const figkey::PacketInfo& packet);
-    void setServerPort(QComboBox* comboBox, const figkey::PacketInfo& packet);
     QComboBox* getSettingComboBox(const QString& label);
-    QString getSettingItemValue(const QString& label) const;
+    void enableSettingComboBox(const QString& label, bool enable);
+    QString getSettingItemValue(const QString& label);
+    void setSettingItemValue(const QString& label, const QString& value, bool clear);
+
+    void setProtocol(uint8_t protocol);
+    bool isLocalIP(const std::string& ip);
+    void setClientIP(const figkey::PacketInfo& packet);
+    void setServerIP(const figkey::PacketInfo& packet);
+    void setServerPort(const figkey::PacketInfo& packet);
 
     bool sendMessages(const QList<int>& sendList);
     void sendNextMessage(const QList<int>& sendList, int currentIndex);

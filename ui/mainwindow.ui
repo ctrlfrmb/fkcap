@@ -90,6 +90,7 @@
     <addaction name="actionStop"/>
     <addaction name="actionFilter"/>
     <addaction name="actionFilter_Clear"/>
+    <addaction name="actionVehicle_Identify"/>
    </widget>
    <widget class="QMenu" name="menuTool">
     <property name="title">
@@ -97,11 +98,10 @@
     </property>
     <addaction name="actionClient"/>
     <addaction name="actionServer"/>
-    <addaction name="actionDoIP_Client"/>
-    <addaction name="actionDoIP_Server"/>
     <addaction name="separator"/>
     <addaction name="actionSimulation_Client"/>
     <addaction name="actionSimulation_Server"/>
+    <addaction name="actionSender"/>
    </widget>
    <addaction name="menuDdd"/>
    <addaction name="menuView"/>
@@ -141,15 +141,13 @@
    <addaction name="separator"/>
    <addaction name="actionFilter"/>
    <addaction name="actionFilter_Clear"/>
+   <addaction name="actionVehicle_Identify"/>
    <addaction name="separator"/>
    <addaction name="actionClient"/>
    <addaction name="actionServer"/>
    <addaction name="actionSimulation_Client"/>
    <addaction name="actionSimulation_Server"/>
-   <addaction name="separator"/>
-   <addaction name="actionDoIP_Client"/>
-   <addaction name="actionDoIP_Server"/>
-   <addaction name="separator"/>
+   <addaction name="actionSender"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionAbout">
@@ -221,24 +219,6 @@
    </property>
    <property name="toolTip">
     <string>Capture Filter Clear</string>
-   </property>
-  </action>
-  <action name="actionDoIP_Client">
-   <property name="icon">
-    <iconset resource="../resource.qrc">
-     <normaloff>:/images/resource/icons/doip_client.png</normaloff>:/images/resource/icons/doip_client.png</iconset>
-   </property>
-   <property name="text">
-    <string>DoIP Client</string>
-   </property>
-  </action>
-  <action name="actionDoIP_Server">
-   <property name="icon">
-    <iconset resource="../resource.qrc">
-     <normaloff>:/images/resource/icons/doip_server.png</normaloff>:/images/resource/icons/doip_server.png</iconset>
-   </property>
-   <property name="text">
-    <string>DoIP Server</string>
    </property>
   </action>
   <action name="actionSave">
@@ -344,6 +324,27 @@
    </property>
    <property name="text">
     <string>Simulation Server</string>
+   </property>
+  </action>
+  <action name="actionSender">
+   <property name="icon">
+    <iconset resource="../resource.qrc">
+     <normaloff>:/images/resource/icons/sender.png</normaloff>:/images/resource/icons/sender.png</iconset>
+   </property>
+   <property name="text">
+    <string>Sender</string>
+   </property>
+  </action>
+  <action name="actionVehicle_Identify">
+   <property name="icon">
+    <iconset resource="../resource.qrc">
+     <normaloff>:/images/resource/icons/vehicle_identify.png</normaloff>:/images/resource/icons/vehicle_identify.png</iconset>
+   </property>
+   <property name="text">
+    <string>Vehicle Identify</string>
+   </property>
+   <property name="toolTip">
+    <string>Automatically identify vehicle information</string>
    </property>
   </action>
  </widget>
