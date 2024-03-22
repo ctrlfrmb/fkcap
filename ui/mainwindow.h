@@ -8,8 +8,6 @@
 #include "sqlite.h"
 #include "packeinfo.h"
 #include "networkassistwindow.h"
-#include "senderwindow.h"
-#include "vehicleidentifywindow.h"
 
 namespace Ui {
 class MainWindow;
@@ -70,6 +68,10 @@ private slots:
 
     void on_actionVehicle_Identify_triggered();
 
+    void on_actionNetwork_Card_triggered();
+
+    void on_actionDoIP_triggered();
+
 private:
     void initTableView();
     void initTreeView();
@@ -86,8 +88,6 @@ private:
 
     NetworkAssistWindow client;
     NetworkAssistWindow server;
-    SenderWindow sender;
-    VehicleIdentifyWindow vehicle;
 
     QMutex mutexPacket;
     uint64_t packetCounter{ 0 };

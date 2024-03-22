@@ -254,7 +254,9 @@ namespace figkey {
 
     bool NpcapCom::run()
     {
-        isRunning = false;
+        if (isRunning) {
+            return isRunning;
+        }
 
         if (!pcapOpen())
             return isRunning;

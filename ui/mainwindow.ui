@@ -74,6 +74,8 @@
     <property name="title">
      <string>Setting</string>
     </property>
+    <addaction name="actionNetwork_Card"/>
+    <addaction name="actionDoIP"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -345,6 +347,24 @@
    </property>
    <property name="toolTip">
     <string>Automatically identify vehicle information</string>
+   </property>
+  </action>
+  <action name="actionNetwork_Card">
+   <property name="icon">
+    <iconset resource="../resource.qrc">
+     <normaloff>:/images/resource/icons/select_device.png</normaloff>:/images/resource/icons/select_device.png</iconset>
+   </property>
+   <property name="text">
+    <string>Network Card</string>
+   </property>
+  </action>
+  <action name="actionDoIP">
+   <property name="icon">
+    <iconset resource="../resource.qrc">
+     <normaloff>:/images/resource/icons/doip_setting.png</normaloff>:/images/resource/icons/doip_setting.png</iconset>
+   </property>
+   <property name="text">
+    <string>DoIP</string>
    </property>
   </action>
  </widget>

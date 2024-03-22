@@ -531,6 +531,9 @@ bool NetworkHelper::startCycleTimers() {
                 isStart = true;
             }
         }
+        else {
+            isStart = true;
+        }
     }
 
     return isStart;

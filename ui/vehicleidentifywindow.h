@@ -23,8 +23,8 @@ public:
 
 private slots:
     void onRequestButtonClicked();
-    void onDiagnoseButtonClicked();
     void onUpdateButtonClicked();
+    void onDiagnoseButtonClicked();
     void onTimeout();
     void onReadyRead();
 
@@ -37,6 +37,7 @@ private:
     void initTreeReceive();
     void initWindow();
 
+    void sendMessage(int type, QByteArray param);
     void startTimer();
     bool stopTimer();
 
@@ -48,6 +49,11 @@ private:
     QGroupBox* receiveBox;
     QUdpSocket* udpSocket;
     QTimer* timer;
+
+    bool isTimeout { true };
+    QHostAddress ipAddress;
+    quint16 port;
+    QString ecuName;
 };
 
 

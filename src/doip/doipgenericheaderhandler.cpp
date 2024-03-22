@@ -229,19 +229,16 @@ void DoIPPacketCommon::Ntoh()
 QByteArray DoIPPacketCommon::ConstructVehicleIdentificationRequest() {
     DoIPPacketCommon packet;
 
-    auto ver = figkey::DoIPClientConfig::Instance().getVersion();
-    packet.SetProtocolVersion(ver);
+    packet.SetProtocolVersion(figkey::DoIPClientConfig::Instance().getVersion());
     packet.SetPayloadType(DOIP_VEHICLE_IDENTIFICATION_REQUEST);
 
     return packet.GetDoIPMessage();
-
 }
 
 QByteArray DoIPPacketCommon::ConstructVehicleIdentificationRequestWithEid() {
     DoIPPacketCommon packet;
 
-    auto ver = figkey::DoIPClientConfig::Instance().getVersion();
-    packet.SetProtocolVersion(ver);
+    packet.SetProtocolVersion(figkey::DoIPClientConfig::Instance().getVersion());
     packet.SetPayloadType(DOIP_VEHICLE_IDENTIFICATION_REQUEST_WITH_EID);
     packet.SetPayloadMessage(figkey::DoIPServerConfig::Instance().getEid());
 
@@ -250,9 +247,11 @@ QByteArray DoIPPacketCommon::ConstructVehicleIdentificationRequestWithEid() {
 
 QByteArray DoIPPacketCommon::ConstructVehicleIdentificationRequestWithEid(const QByteArray &eid) {
     DoIPPacketCommon packet;
+    if (eid.size() != DOIP_VEHICLE_IDENTIFICATION_REQUEST_WITH_EID_LENGTH) {
+        return {};
+    }
 
-    auto ver = figkey::DoIPClientConfig::Instance().getVersion();
-    packet.SetProtocolVersion(ver);
+    packet.SetProtocolVersion(figkey::DoIPClientConfig::Instance().getVersion());
     packet.SetPayloadType(DOIP_VEHICLE_IDENTIFICATION_REQUEST_WITH_EID);
     packet.SetPayloadMessage(eid);
 
@@ -262,8 +261,7 @@ QByteArray DoIPPacketCommon::ConstructVehicleIdentificationRequestWithEid(const 
 QByteArray DoIPPacketCommon::ConstructVehicleIdentificationRequestWithVin() {
     DoIPPacketCommon packet;
 
-    auto ver = figkey::DoIPClientConfig::Instance().getVersion();
-    packet.SetProtocolVersion(ver);
+    packet.SetProtocolVersion(figkey::DoIPClientConfig::Instance().getVersion());
     packet.SetPayloadType(DOIP_VEHICLE_IDENTIFICATION_REQUEST_WITH_VIN);
     packet.SetPayloadMessage(figkey::DoIPServerConfig::Instance().getVin());
 
@@ -272,9 +270,11 @@ QByteArray DoIPPacketCommon::ConstructVehicleIdentificationRequestWithVin() {
 
 QByteArray DoIPPacketCommon::ConstructVehicleIdentificationRequestWithVin(const QByteArray &vin) {
     DoIPPacketCommon packet;
+    if (vin.size() != DOIP_VEHICLE_IDENTIFICATION_REQUEST_WITH_VIN_LENGTH) {
+        return {};
+    }
 
-    auto ver = figkey::DoIPClientConfig::Instance().getVersion();
-    packet.SetProtocolVersion(ver);
+    packet.SetProtocolVersion(figkey::DoIPClientConfig::Instance().getVersion());
     packet.SetPayloadType(DOIP_VEHICLE_IDENTIFICATION_REQUEST_WITH_VIN);
     packet.SetPayloadMessage(vin);
 
@@ -314,6 +314,78 @@ QMap<QString, QString> DoIPPacketCommon::ParseVehicleAnnouncementInformation(con
     }
 
     return info;
+}
+
+QByteArray DoIPPacketCommon::ConstructDoipEntityStatusRequest() {
+    DoIPPacketCommon packet;
+
+    packet.SetProtocolVersion(figkey::DoIPClientConfig::Instance().getVersion());
+    packet.SetPayloadType(DOIP_DOIP_ENTITY_STATUS_REQUEST);
+
+    return packet.GetDoIPMessage();
+}
+
+QMap<QString, QString> DoIPPacketCommon::ParseDoIPEntityStatus(const QByteArray &payload)
+{
+    QMap<QString, QString> status;
+
+    if (payload.size() < DOIP_ENTITY_STATUS_RESPONSE_MIN_LENGTH) {
+        return status;
+    }
+
+    switch (payload[0]) {
+    case 0x00:
+        status.insert(DOIP_ENTITY_NODE_TYPE_ATTRIBUTE, "DoIP gateway");
+        break;
+    case 0x01:
+        status.insert(DOIP_ENTITY_NODE_TYPE_ATTRIBUTE, "DoIP node");
+        break;
+    default:
+        status.insert(DOIP_ENTITY_NODE_TYPE_ATTRIBUTE, QString::number((quint8)payload[0], 16));
+        break;
+    }
+
+    status.insert(DOIP_ENTITY_MCTS_ATTRIBUTE, QString::number((quint8)payload[1]));
+    status.insert(DOIP_ENTITY_NCTS_ATTRIBUTE, QString::number((quint8)payload[2]));
+
+    if (payload.size() == DOIP_ENTITY_STATUS_RESPONSE_MAX_LENGTH) {
+        quint32 MDS = ((quint8)payload[3] << 24) | ((quint8)payload[4] << 16) | ((quint8)payload[5] << 8) | (quint8)payload[6];
+        status.insert(DOIP_ENTITY_MDS_ATTRIBUTE, QString::number(MDS));
+    }
+    return status;
+}
+
+QByteArray DoIPPacketCommon::ConstructDiagnosticPowerModeInformationRequest() {
+    DoIPPacketCommon packet;
+
+    packet.SetProtocolVersion(figkey::DoIPClientConfig::Instance().getVersion());
+    packet.SetPayloadType(DOIP_DIAGNOSTIC_POWER_MODE_INFORMATION_REQUEST);
+
+    return packet.GetDoIPMessage();
+}
+
+QMap<QString, QString> DoIPPacketCommon::ParseDiagnosticPowerModeInformation(const QByteArray &payload) {
+    QMap<QString, QString> mode;
+
+    if (payload.size() != DOIP_DIAGNOSTIC_POWER_MODE_INFORMATION_RESPONSE_LENGTH) {
+        return mode;
+    }
+
+    switch (payload[0]) {
+    case 0x00:
+        mode.insert(DOIP_DIAGNOSTIC_POWER_MODE_ATTRIBUTE, "not ready");
+        break;
+    case 0x01:
+        mode.insert(DOIP_DIAGNOSTIC_POWER_MODE_ATTRIBUTE, "ready");
+        break;
+    case 0x02:
+        mode.insert(DOIP_DIAGNOSTIC_POWER_MODE_ATTRIBUTE, "not supported");
+        break;
+    default:
+        mode.insert(DOIP_DIAGNOSTIC_POWER_MODE_ATTRIBUTE, QString::number((quint8)payload[0], 16));
+        break;
+    }
+    return mode;
 }
 
 /**

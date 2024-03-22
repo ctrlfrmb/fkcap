@@ -15,6 +15,10 @@
 #include "ipcap.h"
 #include "config.h"
 #include "protocol/ip.h"
+#include "senderwindow.h"
+#include "vehicleidentifywindow.h"
+#include "devicewindow.h"
+#include "doipsettingwindow.h"
 
 MainWindow::MainWindow(bool isStart, QWidget *parent) :
     QMainWindow(parent),
@@ -454,14 +458,39 @@ void MainWindow::on_actionSimulation_Server_triggered()
 
 void MainWindow::on_actionSender_triggered()
 {
-    sender.show();
+    SenderWindow sender;
+    sender.exec();
 }
 
 void MainWindow::on_actionVehicle_Identify_triggered()
 {
-    if (vehicle.exec() == QDialog::Rejected) {
+    VehicleIdentifyWindow vehicle;
+    if (vehicle.exec() == QDialog::Rejected)
         return;
-    }
 
     client.startDiagnose();
+}
+
+void MainWindow::on_actionNetwork_Card_triggered()
+{
+    DeviceWindow d;
+    if (d.exec() == QDialog::Rejected)
+        return;
+
+    if (d.getChecked()) {
+        if (figkey::NpcapCom::Instance().getIsRunning()) {
+            QMessageBox::warning(nullptr, "Warning",
+                                 QString("Other network cards are being captured. Please stop and then start capturing. Pay attention to saving the data.")
+                                 );
+            return;
+        }
+
+        on_actionStart_triggered();
+    }
+}
+
+void MainWindow::on_actionDoIP_triggered()
+{
+    DoIPSettingWindow setting;
+    setting.exec();
 }

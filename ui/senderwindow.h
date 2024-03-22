@@ -1,7 +1,7 @@
 ﻿#ifndef SENDERWINDOW_H
 #define SENDERWINDOW_H
 
-#include <QApplication>
+#include <QDialog>
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QFormLayout>
@@ -14,13 +14,13 @@
 #include <QTcpSocket>
 #include <QTimer>
 
-class SenderWindow : public QWidget
+class SenderWindow : public QDialog
 {
     Q_OBJECT
 
 public:
     SenderWindow(QWidget *parent = nullptr)
-        : QWidget(parent)
+        : QDialog(parent)
         , udpSocket(new QUdpSocket(this))
         , tcpSocket(new QTcpSocket(this))
         , timer(new QTimer(this))

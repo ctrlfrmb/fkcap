@@ -24,8 +24,13 @@
 #define DOIP_DIAGNOSTIC_ACK 0x8002
 #define DOIP_DIAGNOSTIC_NACK 0x8003
 
+#define DOIP_VEHICLE_IDENTIFICATION_REQUEST_WITH_EID_LENGTH 6
+#define DOIP_VEHICLE_IDENTIFICATION_REQUEST_WITH_VIN_LENGTH 17
 #define DOIP_VEHICLE_ANNOUNCEMENT_MIN_LENGTH 32
 #define DOIP_VEHICLE_ANNOUNCEMENT_MAX_LENGTH 33
+#define DOIP_ENTITY_STATUS_RESPONSE_MIN_LENGTH 3
+#define DOIP_ENTITY_STATUS_RESPONSE_MAX_LENGTH 7
+#define DOIP_DIAGNOSTIC_POWER_MODE_INFORMATION_RESPONSE_LENGTH 1
 #define DOIP_ROUTE_ACTIVATION_RESERVED_ISO13400_LENGTH 4
 #define DOIP_ROUTE_ACTIVATION_RESERVED_OEM_LENGTH 4
 #define DOIP_ROUTE_ACTIVATION_RESPONSE_MIN_LENGTH 9
@@ -47,6 +52,11 @@
 #define DOIP_VEHICLE_GID_ATTRIBUTE "GID"
 #define DOIP_VEHICLE_VIN_ATTRIBUTE "VIN"
 #define DOIP_VEHICLE_SYNC_STATUS_ATTRIBUTE "VIN/GID sync status"
+#define DOIP_ENTITY_NODE_TYPE_ATTRIBUTE "Node Type"
+#define DOIP_ENTITY_MCTS_ATTRIBUTE "Max Concurrent TCP_DATA Sockets"
+#define DOIP_ENTITY_NCTS_ATTRIBUTE "Currently Open TCP_DATA Sockets"
+#define DOIP_ENTITY_MDS_ATTRIBUTE "Max Data Size"
+#define DOIP_DIAGNOSTIC_POWER_MODE_ATTRIBUTE "Diagnostic Power Mode"
 
 enum class ByteOrder : uint8_t{
     kHost,
@@ -179,6 +189,14 @@ public:
     static QByteArray ConstructVehicleIdentificationRequestWithVin(const QByteArray &vin);
 
     static QMap<QString, QString> ParseVehicleAnnouncementInformation(const QByteArray &payload);
+
+    static QByteArray ConstructDoipEntityStatusRequest();
+
+    static QMap<QString, QString> ParseDoIPEntityStatus(const QByteArray &payload);
+
+    static QByteArray ConstructDiagnosticPowerModeInformationRequest();
+
+    static QMap<QString, QString> ParseDiagnosticPowerModeInformation(const QByteArray &payload);
 
     /**
      * 构造路由激活指令

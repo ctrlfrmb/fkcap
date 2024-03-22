@@ -35,12 +35,8 @@ int main(int argc, char *argv[])
     bool isStart{ true };
     {
         DeviceWindow d;
-        d.adjustSize();
-        d.setFixedSize(d.size());
-        int result = d.exec();
-        if (result == QDialog::Rejected) {
+        if (QDialog::Rejected == d.exec())
             return -1;
-        }
 
         isStart = d.getChecked();
     }
