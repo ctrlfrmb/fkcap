@@ -309,7 +309,7 @@ void MainWindow::on_actionOpen_triggered()
     }
 
     if (db.loadFile()) {
-       auto packets = db.getPacket(1, figkey::CaptureConfig::Instance().getConfigInfo().displayRows);
+       auto packets = db.getPacketByFilter(1, figkey::CaptureConfig::Instance().getConfigInfo().displayRows);
        if (packets.empty()) {
            QMessageBox::warning(nullptr, "Warning",
                                 QString("The current database file is an empty file")
@@ -432,12 +432,19 @@ void MainWindow::on_actionSave_Server_Test_triggered()
 
 void MainWindow::on_actionSimulation_Client_triggered()
 {
-    auto packets = pim->getAllPacket();
+    QVector<figkey::PacketInfo> packets(pim->getAllPacket());
+    QVector<figkey::PacketInfo>::iterator it = std::remove_if(packets.begin(), packets.end(), [](const figkey::PacketInfo& packet) {
+        return packet.data.empty();
+    });
+    packets.erase(it, packets.end());
     if (packets.empty())
         return;
+
     client.setSimulation(packets[0]);
     for (const auto& packet : packets) {
-        client.addRow(packet);
+        if (!client.addRow(packet)) {
+            break;
+        }
     }
 
     client.show();
@@ -445,12 +452,20 @@ void MainWindow::on_actionSimulation_Client_triggered()
 
 void MainWindow::on_actionSimulation_Server_triggered()
 {
-    auto packets = pim->getAllPacket();
+    QVector<figkey::PacketInfo> packets(pim->getAllPacket());
+    packets.erase(std::remove_if(packets.begin(), packets.end(),
+                                           [](const figkey::PacketInfo& packet){
+                                              return packet.data.empty();
+                                          }),
+                           packets.end());
     if (packets.empty())
         return;
+
     server.setSimulation(packets[0]);
     for (const auto& packet : packets) {
-        server.addRow(packet);
+        if (!server.addRow(packet)) {
+            break;
+        }
     }
 
     server.show();

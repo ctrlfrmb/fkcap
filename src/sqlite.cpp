@@ -245,6 +245,104 @@ std::vector<figkey::PacketInfo> SqliteCom::getPacket(int start, int rows) {
     return results;
 }
 
+std::vector<figkey::PacketInfo> SqliteCom::getPacketByFilter(int start, int rows) {
+    std::vector<figkey::PacketInfo> results;
+    auto filter = figkey::CaptureConfig::Instance().getConfigInfo().filter;
+
+    if (!db.isOpen())
+        return results;
+
+    int offset = start - 1;  // 调整为正确的偏移量
+    if (offset < 0)
+        offset = 0;  // 确保偏移量不为负
+
+    QString protocolType = QString::number(filter.protocolType);
+    QString ip = QString::fromStdString(filter.ip);
+    QString srcIP = QString::fromStdString(filter.srcIP);
+    QString destIP = QString::fromStdString(filter.destIP);
+    QString portStr = QString::number(filter.port);
+    QString srcPortStr = QString::number(filter.srcPort);
+    QString destPortStr = QString::number(filter.destPort);
+    QString srcMAC = QString::fromStdString(filter.srcMAC);
+    QString destMAC = QString::fromStdString(filter.destMAC);
+    QString minLen = QString::number(filter.minLen);
+    QString maxLen = QString::number(filter.maxLen);
+    QString rowsStr = QString::number(rows);
+    QString offsetStr = QString::number(offset);
+
+    QString queryString;
+    if(filter.protocolType == figkey::PROTOCOL_TYPE_DEFAULT){
+        queryString += QString("SELECT * FROM Packets WHERE (1 = 1) ");
+    }else if(filter.protocolType == figkey::PROTOCOL_TYPE_DOIP){
+        queryString += QString("SELECT * FROM Packets WHERE (`protocol` >= %1) ").arg(protocolType);
+    }else{
+        queryString += QString("SELECT * FROM Packets WHERE (`protocol` = %1) ").arg(protocolType);
+    }
+
+    if(filter.ip.empty()){
+        queryString += QString("AND ('' = '%1' OR `srcIP` = '%1') AND ('' = '%2' OR `destIP` = '%2') ").arg(srcIP,destIP);
+    }else{
+        queryString += QString("AND (`srcIP` = '%1' OR `destIP` = '%1') ").arg(ip);
+    }
+
+    if(filter.port == 0){
+        queryString += QString("AND (0 = %1 OR `srcPort` = %1) AND (0 = %2 OR `destPort` = %2) ").arg(srcPortStr,destPortStr);
+    }else{
+        queryString += QString("AND (`srcPort` = %1 OR `destPort` = %1) ").arg(portStr);
+    }
+
+    if(!filter.srcMAC.empty()){
+        queryString += QString("AND `srcMAC` = '%1' ").arg(srcMAC);
+    }
+
+    if(!filter.destMAC.empty()){
+        queryString += QString("AND `destMAC` = '%1' ").arg(destMAC);
+    }
+
+    if(filter.minLen != 0 && filter.maxLen != 0){
+        queryString += QString("AND (length >= %1 AND length <= %2) ").arg(minLen, maxLen);
+    }else if(filter.minLen != 0){
+        queryString += QString("AND length >= %1 ").arg(minLen);
+    }else if(filter.maxLen != 0){
+        queryString += QString("AND length <= %1 ").arg(maxLen);
+    }
+
+    queryString += QString("LIMIT %1 OFFSET %2").arg(rowsStr).arg(offsetStr);
+
+    query.prepare(queryString);
+    if (!query.exec()) {
+         qDebug() << "Error: " << query.lastError();
+    }
+
+    qDebug() << queryString;
+
+    query.prepare(queryString);
+    if (!query.exec()) {
+        qDebug() << "Failed to execute SQL query: " << query.lastError();
+        return results;
+    }
+
+    while (query.next()) {
+        figkey::PacketInfo packet;
+        packet.index = query.value("id").toUInt();
+        // 我们获取字符串值的方式用了一种稍微简短一些的写法
+        packet.timestamp = query.value("timestamp").toString().toUtf8().constData();
+        packet.err = query.value("error").toUInt();
+        packet.srcIP = query.value("srcIP").toString().toUtf8().constData();
+        packet.destIP = query.value("destIP").toString().toUtf8().constData();
+        packet.srcMAC = query.value("srcMAC").toString().toUtf8().constData();
+        packet.destMAC = query.value("destMAC").toString().toUtf8().constData();
+        packet.srcPort = query.value("srcPort").toUInt();
+        packet.destPort = query.value("destPort").toUInt();
+        packet.protocolType = query.value("protocol").toUInt();
+        packet.payloadLength = query.value("length").toUInt();
+        packet.data = query.value("data").toString().toUtf8().constData();
+        results.push_back(packet);
+    }
+
+    return results;
+}
+
 void SqliteCom::writeFile() {
     if (!db.isOpen())
         return;

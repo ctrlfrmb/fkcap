@@ -5,6 +5,7 @@
 #include <QSpinBox>
 #include <QMessageBox>
 #include <QTimer>
+#include <QDebug>
 
 #include "networkhelper.h"
 #include "config.h"
@@ -160,7 +161,6 @@ bool NetworkHelper::isLooped(int start) {
 }
 
 void NetworkHelper::initTableSend() {
-    ui->tableSend->clear();
     // Set the number of columns
     ui->tableSend->setColumnCount(6);
 
@@ -310,10 +310,11 @@ void NetworkHelper::initTableSend() {
             if (item == nextRowItem && !item->text().isEmpty()) {
                 bool ok;
                 int nextRow = item->text().toInt(&ok);
-                if (!ok || nextRow < 1 || nextRow > ui->tableSend->rowCount() ||
-                    ui->tableSend->item(nextRow - 1, 2)->text().isEmpty()) {
+                QTableWidgetItem* nextItem = ui->tableSend->item(nextRow - 1, 2);
+                if (!ok || !nextItem || nextRow < 1 || nextRow > ui->tableSend->rowCount() ||
+                        nextItem->text().isEmpty()) {
                     item->setText("");
-                    QMessageBox::warning(nullptr, "Warning", "Invalid Next value");
+                    QMessageBox::warning(nullptr, "Warning", QString("Invalid Next value %1 at row %2").arg(nextRow).arg(item->row()+1));
                 } else {
                     // Update the item's UserRole with the actual number
                     item->setData(Qt::UserRole, nextRow);
@@ -362,6 +363,37 @@ void NetworkHelper::initTableReceive() {
     ui->tableReceive->setColumnWidth(0, 100);
     ui->tableReceive->setColumnWidth(1, 50);
     ui->tableReceive->setColumnWidth(2, 400);
+}
+
+void NetworkHelper::clearTableSend() {
+    // 遍历所有行
+    for (int i = 0; i < ui->tableSend->rowCount(); ++i) {
+        // 清空时间和数据列
+        ui->tableSend->item(i, 1)->setText("");
+        ui->tableSend->item(i, 2)->setText("");
+
+        // 取消勾选CK列
+        QWidget *widget = ui->tableSend->cellWidget(i, 0);
+        QCheckBox *checkBox = widget ? widget->findChild<QCheckBox *>() : nullptr;
+        if (checkBox) {
+            checkBox->setChecked(false);
+        }
+
+        // 重置类型列为"Send"
+        QComboBox *comboBox = qobject_cast<QComboBox *>(ui->tableSend->cellWidget(i, 3));
+        if (comboBox) {
+            comboBox->setCurrentIndex(0);
+        }
+
+        // 清空下一行列
+        ui->tableSend->item(i, 4)->setText("");
+
+        // 重置间隔列为0
+        QSpinBox *intervalSpinBox = qobject_cast<QSpinBox *>(ui->tableSend->cellWidget(i, 5));
+        if (intervalSpinBox) {
+            intervalSpinBox->setValue(0);
+        }
+    }
 }
 
 bool NetworkHelper::setErrorInfo(int row, const QString& info) {

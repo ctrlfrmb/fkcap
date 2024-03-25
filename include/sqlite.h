@@ -24,6 +24,8 @@ public:
 
     std::vector<figkey::PacketInfo> getPacket(int start, int rows);
 
+    std::vector<figkey::PacketInfo> getPacketByFilter(int start, int rows);
+
     void writeFile();
 
     void saveFile();

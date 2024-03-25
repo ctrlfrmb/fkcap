@@ -103,10 +103,18 @@ void NetworkAssistWindow::autoTest() {
         return;
 
     on_buttonConnect_clicked();
-    if (!ui->buttonSend->isEnabled())
-        return;
 
-    on_buttonSend_clicked();
+    QTimer* timer = new QTimer(this);
+    timer->setInterval(2000);
+    timer->setSingleShot(true);
+
+    connect(timer, &QTimer::timeout, this, [this]() {
+        if (ui->buttonSend->isEnabled()) {
+            on_buttonSend_clicked();
+        }
+    });
+
+    timer->start();
 }
 
 bool NetworkAssistWindow::saveConfigToFile() {
@@ -221,7 +229,7 @@ bool NetworkAssistWindow::loadConfigFromFile(const QString& fileName) {
         return false;
     }
 
-    helper->initTableSend();
+    helper->clearTableSend();
 
     QJsonObject obj = doc.object();
     auto messageType = (obj["messageType"].toInt() > 0 && obj["messageType"].toInt() < ui->comboBox->count()) ? obj["messageType"].toInt() : 0;
@@ -246,15 +254,14 @@ bool NetworkAssistWindow::loadConfigFromFile(const QString& fileName) {
 
     // Load Send List
     QJsonArray sendListArray = obj["sendList"].toArray();
-    for (int i = 0; i < sendListArray.size(); ++i) {
+    int rows = ui->tableSend->rowCount();
+    for (int i = 0; i < sendListArray.size() && i < rows; ++i) {
         QJsonObject sendItemObject = sendListArray[i].toObject();
-        QCheckBox *checkBox = ui->tableSend->cellWidget(i, 0)->findChild<QCheckBox*>();
         QTableWidgetItem *timeItem = ui->tableSend->item(i, 1);
         QTableWidgetItem *dataItem = ui->tableSend->item(i, 2);
         QComboBox *typeBox = qobject_cast<QComboBox *>(ui->tableSend->cellWidget(i, 3));
         QSpinBox *intervalSpinBox = qobject_cast<QSpinBox *>(ui->tableSend->cellWidget(i, 5));
 
-        checkBox->setChecked(sendItemObject["ck"].toBool());
         timeItem->setText(sendItemObject["time"].toString());
         dataItem->setText(sendItemObject["data"].toString());
         typeBox->setCurrentIndex(sendItemObject["type"].toInt());
@@ -266,8 +273,9 @@ bool NetworkAssistWindow::loadConfigFromFile(const QString& fileName) {
         }
     }
 
-    for (int i = 0; i < sendListArray.size(); ++i) {
+    for (int i = 0; i < sendListArray.size() && i < rows; ++i) {
         QJsonObject sendItemObject = sendListArray[i].toObject();
+        QCheckBox *checkBox = ui->tableSend->cellWidget(i, 0)->findChild<QCheckBox*>();
         QTableWidgetItem *nextItem = ui->tableSend->item(i, 4);
         if (sendItemObject["next"].toInt() > 0) {
             nextItem->setText(QString::number(sendItemObject["next"].toInt()));
@@ -275,6 +283,7 @@ bool NetworkAssistWindow::loadConfigFromFile(const QString& fileName) {
         else {
             nextItem->setText("");
         }
+        checkBox->setChecked(sendItemObject["ck"].toBool());
     }
 
     this->show();
@@ -293,7 +302,7 @@ bool NetworkAssistWindow::startDiagnose() {
     setSettingItemValue(SET_SERVER_IP_LABEL, server.getIpAddress(), true);
     setSettingItemValue(SET_SERVER_PORT_LABEL, QString::number(server.getTcpPort()), true);
 
-    helper->initTableSend();
+    helper->clearTableSend();
     ui->tableSend->item(0, 2)->setText("10 01");
     helper->setColumnCheckState(0, true);
     this->show();
@@ -352,6 +361,7 @@ void NetworkAssistWindow::setProtocol(uint8_t protocol) {
         QString text{"TCP"};
         switch (protocol) {
         case figkey::PROTOCOL_TYPE_DOIP:
+        case figkey::PROTOCOL_TYPE_UDS:
             text = "DOIP";
             break;
         case figkey::PROTOCOL_TYPE_UDP:
@@ -366,6 +376,32 @@ void NetworkAssistWindow::setProtocol(uint8_t protocol) {
             comboBox->setEnabled(false);
         }
     }
+}
+
+bool NetworkAssistWindow::isCurrentProtocol(uint8_t protocol) {
+    QString strProtocol = getSettingItemValue(SET_PROTOCOL_LABEL);
+    switch (protocol) {
+    case figkey::PROTOCOL_TYPE_DOIP:
+    case figkey::PROTOCOL_TYPE_UDS:
+        if (strProtocol == "DOIP") {
+            return true;
+        }
+        break;
+    case figkey::PROTOCOL_TYPE_TCP:
+        if (strProtocol == "TCP") {
+            return true;
+        }
+        break;
+    case figkey::PROTOCOL_TYPE_UDP:
+        if (strProtocol == "UDP") {
+            return true;
+        }
+        break;
+    default:
+        break;
+    }
+
+    return false;
 }
 
 bool NetworkAssistWindow::isLocalIP(const std::string& ip) {
@@ -456,14 +492,22 @@ bool NetworkAssistWindow::set(figkey::PacketInfo packet) {
     setServerIP(packet);
     setServerPort(packet);
 
-    helper->initTableSend();
+    helper->clearTableSend();
     return true;
 }
 
 bool NetworkAssistWindow::setSimulation(figkey::PacketInfo packet) {
-    if (!set(packet))
-        return false;
+    setProtocol(packet.protocolType);
+    if (isServer) {
+        setSettingItemValue(SET_CLIENT_IP_LABEL, "", true);
+    }
+    else {
+        setSettingItemValue(SET_CLIENT_IP_LABEL, packet.srcIP.c_str(), true);
+    }
+    setSettingItemValue(SET_SERVER_IP_LABEL, packet.destIP.c_str(), true);
+    setSettingItemValue(SET_SERVER_PORT_LABEL, QString::number(packet.destPort), true);
 
+    helper->clearTableSend();
     setMessageType(1);
     return true;
 }
@@ -475,18 +519,25 @@ void NetworkAssistWindow::setMessageType(int type) {
     ui->comboBox->setCurrentIndex(type);
 }
 
-void NetworkAssistWindow::addRow(const figkey::PacketInfo& packet) {
+bool NetworkAssistWindow::addRow(const figkey::PacketInfo& packet) {
     if (packet.payloadLength < 1 || packet.data.empty())
-        return;
+        return true;
+
+    if (!isCurrentProtocol(packet.protocolType))
+        return true;
 
     QComboBox* typeBox{ nullptr };
     int lastReceiveIndex = -1;
     int i = 0;
-    for (; i < ui->tableSend->rowCount(); ++i) {
+    for (; i < ui->tableSend->rowCount(); i++) {
+        QTableWidgetItem* item = ui->tableSend->item(i, 2);
         typeBox = qobject_cast<QComboBox *>(ui->tableSend->cellWidget(i, 3));
-        if (ui->tableSend->item(i, 2)->text().isEmpty()) {
-            ui->tableSend->item(i, 2)->setText(QString::fromStdString(packet.data));
-            break;
+        if (!item || !typeBox)
+            return false;
+
+        if (item->text().isEmpty()) {
+           item->setText(QString::fromStdString(packet.data));
+           break;
         }
 
         if (typeBox && typeBox->currentIndex() == 1) {
@@ -494,8 +545,8 @@ void NetworkAssistWindow::addRow(const figkey::PacketInfo& packet) {
         }
     }
 
-    if ((i >= ui->tableSend->rowCount()) || !typeBox)
-        return;
+    if ((i >= ui->tableSend->rowCount()))
+        return false;
 
     if (isServer) {
         std::string serverIp = getSettingItemValue(SET_SERVER_IP_LABEL).toStdString();
@@ -519,6 +570,8 @@ void NetworkAssistWindow::addRow(const figkey::PacketInfo& packet) {
     if ((lastReceiveIndex >= 0) && ( typeBox->currentIndex() == 0)) {
         ui->tableSend->item(lastReceiveIndex, 4)->setText(QString::number(i+1));
     }
+
+    return true;
 }
 
 void NetworkAssistWindow::on_buttonConnect_clicked()
@@ -750,6 +803,8 @@ void NetworkAssistWindow::on_buttonStopSend_clicked()
 
 void NetworkAssistWindow::on_comboBox_currentIndexChanged(int index)
 {
+    helper->setAllColumnUncheck();
+
     switch (index) {
     case 1:
         helper->setSendAndReceive(true);

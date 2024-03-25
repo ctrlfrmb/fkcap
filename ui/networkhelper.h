@@ -39,6 +39,8 @@ public:
     void initTableSend();
     void initTableReceive();
 
+    void clearTableSend();
+
     bool setErrorInfo(int row, const QString& info);
 
     void setSendState(bool state);

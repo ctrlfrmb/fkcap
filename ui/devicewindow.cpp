@@ -63,6 +63,7 @@ void DeviceWindow::initWindow()
 
     model->setHorizontalHeaderLabels(QStringList()<<QStringLiteral("Network Card"));
     this->ui->treeView->setModel(model);
+    this->ui->treeView->expandAll();
 }
 
 bool DeviceWindow::getChecked() const {

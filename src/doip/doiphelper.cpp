@@ -44,8 +44,6 @@ void DoIPInfoDisplayWindow::buttonClicked() {
 
 void DoIPInfoDisplayWindow::displayInfo(int type, const QMap<QString, QString>& info) {
     data = info;
-    table->clear();
-
     table->setRowCount(data.size());
     table->setColumnCount(2);
 
@@ -125,7 +123,6 @@ bool DoIPHelper::startTimer(int interval, int type) {
     });
 
     timer->start();
-    qDebug() <<"timer start for"<<type<<" , "<<isRequest;
     return true;
 }
 

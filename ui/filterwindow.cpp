@@ -264,7 +264,7 @@ void FilterWindow::on_pushButton_clicked()
         }
 
         //Should min length be less than max length?
-        if(filter.minLen > filter.maxLen){
+        if(filter.maxLen > 0 && filter.minLen > filter.maxLen){
             QMessageBox::warning(this, "Error", "Minimum payload length should be less or equal to maximum payload length.");
             return;
         }

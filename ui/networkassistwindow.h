@@ -29,7 +29,7 @@ public:
     bool set(figkey::PacketInfo packet);
     bool setSimulation(figkey::PacketInfo packet);
     void setMessageType(int type);
-    void addRow(const figkey::PacketInfo& packet);
+    bool addRow(const figkey::PacketInfo& packet);
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -62,6 +62,7 @@ private:
     void setSettingItemValue(const QString& label, const QString& value, bool clear);
 
     void setProtocol(uint8_t protocol);
+    bool isCurrentProtocol(uint8_t protocol);
     bool isLocalIP(const std::string& ip);
     void setClientIP(const figkey::PacketInfo& packet);
     void setServerIP(const figkey::PacketInfo& packet);

@@ -71,6 +71,7 @@ void VehicleIdentifyWindow::addTreeItem(const QMap<QString, QString>& info) {
         childItem->setText(1, it.value());
     }
 
+    ecuItem->setSelected(true);
     ecuItem->setExpanded(true);
 }
 
